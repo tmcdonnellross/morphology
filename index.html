@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Morphology Practice</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .card { transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); }
+        .drop-zone { border: 2px dashed #cbd5e1; background-color: #f1f5f9; transition: background-color 0.2s; }
+        .drop-zone.drag-over { background-color: #e0e7ff; border-color: #818cf8; }
+        .draggable { cursor: grab; user-select: none; }
+        .draggable:active { cursor: grabbing; }
+        .hunt-word.selected { background-color: #c7d2fe; border-color: #818cf8; color: #4338ca; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <div id="app" class="min-h-screen p-4 sm:p-6 lg:p-8">
+
+        <!-- PAGE 1: Main Menu -->
+        <main id="page-main-menu" class="max-w-4xl mx-auto">
+            <header class="text-center mb-10"><h1 class="text-4xl sm:text-5xl font-bold text-slate-900">Morphology Practice</h1><p class="mt-2 text-lg text-slate-600">Select a category to start learning.</p></header>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div onclick="showMorphemeList('prefixes')" class="card cursor-pointer bg-white p-6 rounded-2xl shadow-md border flex flex-col items-center text-center">
+                    <div class="bg-violet-100 text-violet-600 p-4 rounded-xl mb-4"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.72"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.72-1.72"/></svg></div>
+                    <h2 class="text-2xl font-semibold text-slate-900">Prefixes</h2>
+                </div>
+                <div onclick="showMorphemeList('suffixes')" class="card cursor-pointer bg-white p-6 rounded-2xl shadow-md border flex flex-col items-center text-center">
+                     <div class="bg-sky-100 text-sky-600 p-4 rounded-xl mb-4"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 3 7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/><path d="m13 13 6 6"/></svg></div>
+                    <h2 class="text-2xl font-semibold text-slate-900">Suffixes</h2>
+                </div>
+                <div onclick="showMorphemeList('bases')" class="card cursor-pointer bg-white p-6 rounded-2xl shadow-md border flex flex-col items-center text-center">
+                    <div class="bg-emerald-100 text-emerald-600 p-4 rounded-xl mb-4"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg></div>
+                    <h2 class="text-2xl font-semibold text-slate-900">Base Words</h2>
+                </div>
+            </div>
+        </main>
+        
+        <!-- PAGE 2: Morpheme List -->
+        <div id="page-morpheme-list" class="hidden max-w-5xl mx-auto">
+             <header class="mb-8">
+                <button onclick="showPage('page-main-menu')" class="flex items-center text-slate-600 hover:text-slate-900 font-medium"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 mr-2"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>Back to categories</button>
+                <h1 id="morpheme-list-title" class="text-3xl font-bold text-slate-900 mt-2"></h1>
+            </header>
+            <div id="morpheme-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
+        </div>
+
+        <!-- PAGE 3: Activity Menu -->
+        <div id="page-activity-menu" class="hidden max-w-4xl mx-auto">
+            <header class="mb-10">
+                <button id="back-to-morpheme-list" class="flex items-center text-slate-600 hover:text-slate-900 font-medium"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 mr-2"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>Back to list</button>
+                <div class="text-center"><h1 class="text-4xl font-bold text-slate-900">Activities for <span id="selected-morpheme-title" class="text-violet-600"></span></h1><p class="mt-2 text-lg text-slate-600">Choose an activity to practice this morpheme.</p></div>
+            </header>
+            <div id="activity-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                 <div onclick="showActivityPage('page-word-sums')" class="card cursor-pointer bg-white p-6 rounded-2xl shadow-md border"><h2 class="text-xl font-semibold text-slate-900 mb-1">Word Sums</h2><p class="text-slate-500 text-sm">Combine morphemes to build words.</p></div>
+                <div onclick="showActivityPage('page-fill-in-blanks')" class="card cursor-pointer bg-white p-6 rounded-2xl shadow-md border"><h2 class="text-xl font-semibold text-slate-900 mb-1">Fill-in-the-Blanks</h2><p class="text-slate-500 text-sm">Drag words into the correct sentences.</p></div>
+                 <div onclick="showActivityPage('page-word-matrix')" class="card cursor-pointer bg-white p-6 rounded-2xl shadow-md border"><h2 class="text-xl font-semibold text-slate-900 mb-1">Word Matrix</h2><p class="text-slate-500 text-sm">Combine morphemes from the grid.</p></div>
+                 <div onclick="showActivityPage('page-morpheme-hunt')" class="card cursor-pointer bg-white p-6 rounded-2xl shadow-md border"><h2 class="text-xl font-semibold text-slate-900 mb-1">Morpheme Hunt</h2><p class="text-slate-500 text-sm">Find words with the target morpheme.</p></div>
+                 <div onclick="showActivityPage('page-spelling-chaining')" class="card cursor-pointer bg-white p-6 rounded-2xl shadow-md border"><h2 class="text-xl font-semibold text-slate-900 mb-1">Spelling Chaining</h2><p class="text-slate-500 text-sm">Build a chain of words step-by-step.</p></div>
+            </div>
+        </div>
+        
+        <!-- ACTIVITY PAGES START HERE -->
+        <div id="page-word-sums" class="hidden max-w-3xl mx-auto"></div>
+        <div id="page-fill-in-blanks" class="hidden max-w-4xl mx-auto"></div>
+        <div id="page-word-matrix" class="hidden max-w-5xl mx-auto"></div>
+        <div id="page-morpheme-hunt" class="hidden max-w-4xl mx-auto"></div>
+        <div id="page-spelling-chaining" class="hidden max-w-3xl mx-auto"></div>
+
+    </div>
+    
+    <!-- TEMPLATES FOR ACTIVITY PAGES -->
+    <template id="word-sums-template"><header class="flex items-center justify-between mb-8"><div><button onclick="showPage('page-activity-menu')" class="flex items-center text-slate-600 hover:text-slate-900 font-medium"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 mr-2"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>Back</button><h1 class="text-3xl font-bold text-slate-900 mt-2">Word Sums</h1></div><button onclick="generateWordSums()" class="bg-violet-500 hover:bg-violet-600 text-white font-bold py-2 px-4 rounded-lg">New Set</button></header><div id="word-sums-container" class="space-y-4"></div><div class="mt-8 text-center"><button onclick="checkWordSums()" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-lg text-lg">Check</button><p id="word-sums-score" class="mt-4 text-lg font-medium"></p></div></template>
+    <template id="fill-in-blanks-template"><header class="flex items-center justify-between mb-8"><div><button onclick="showPage('page-activity-menu')" class="flex items-center text-slate-600 hover:text-slate-900 font-medium"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 mr-2"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>Back</button><h1 class="text-3xl font-bold text-slate-900 mt-2">Fill-in-the-Blanks</h1></div><button onclick="generateClozeActivity()" class="bg-sky-500 hover:bg-sky-600 text-white font-bold py-2 px-4 rounded-lg">New Set</button></header><p class="text-center text-slate-600 mb-8 bg-slate-100 p-4 rounded-lg">Drag the words from the word bank to complete the sentences.</p><div id="cloze-activity-container"><div class="mb-8 p-4 bg-white rounded-lg shadow-sm border"><h3 class="font-semibold mb-3 text-center">Word Bank</h3><div id="cloze-word-bank" class="flex flex-wrap justify-center gap-3"></div></div><div id="cloze-sentences" class="space-y-4 text-lg"></div></div><div class="mt-8 text-center"><button onclick="checkClozeAnswers()" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-lg text-lg">Check</button><p id="cloze-score" class="mt-4 text-lg font-medium"></p></div></template>
+    <template id="word-matrix-template"><header class="flex items-center justify-between mb-8"><div><button onclick="showPage('page-activity-menu')" class="flex items-center text-slate-600 hover:text-slate-900 font-medium"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 mr-2"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>Back</button><h1 class="text-3xl font-bold text-slate-900 mt-2">Word Matrix</h1></div><button onclick="generateWordMatrix()" class="bg-rose-500 hover:bg-rose-600 text-white font-bold py-2 px-4 rounded-lg">Reset</button></header><p class="text-center text-slate-600 mb-8 bg-slate-100 p-4 rounded-lg">Click the morphemes from the lists to build valid words. Try to find as many as you can!</p><div class="grid grid-cols-1 md:grid-cols-3 gap-6"><div class="md:col-span-2 bg-white p-6 rounded-2xl shadow-md border"><div id="matrix-builder-area" class="mb-4"><div class="flex items-center justify-center p-4 bg-slate-100 rounded-lg mb-4 h-16 text-2xl font-mono text-center" id="matrix-current-word"></div><div class="flex justify-center gap-4"><button onclick="submitMatrixWord()" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-lg">Submit</button><button onclick="clearMatrixWord()" class="bg-slate-400 hover:bg-slate-500 text-white font-bold py-2 px-6 rounded-lg">Clear</button></div><p id="matrix-feedback" class="text-center mt-3 h-6 font-medium"></p></div><div id="matrix-grid" class="grid grid-cols-3 gap-4 text-center"><div><h3 class="font-bold mb-2 border-b-2 pb-1">Prefixes</h3><div id="matrix-prefixes" class="space-y-2"></div></div><div><h3 class="font-bold mb-2 border-b-2 pb-1">Bases</h3><div id="matrix-bases" class="space-y-2"></div></div><div><h3 class="font-bold mb-2 border-b-2 pb-1">Suffixes</h3><div id="matrix-suffixes" class="space-y-2"></div></div></div></div><div class="bg-white p-6 rounded-2xl shadow-md border"><h3 class="font-bold text-lg mb-3 text-center">Correct Words Found (<span id="matrix-found-count">0</span>)</h3><ul id="matrix-found-list" class="space-y-2 h-80 overflow-y-auto bg-slate-50 p-3 rounded-lg"></ul></div></div></template>
+    <template id="morpheme-hunt-template"><header class="flex items-center justify-between mb-8"><div><button onclick="showPage('page-activity-menu')" class="flex items-center text-slate-600 hover:text-slate-900 font-medium"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 mr-2"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>Back</button><h1 class="text-3xl font-bold text-slate-900 mt-2">Morpheme Hunt</h1></div><button onclick="generateMorphemeHunt()" class="bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-4 rounded-lg">New Set</button></header><p id="hunt-instructions" class="text-center text-slate-600 mb-8 bg-slate-100 p-4 rounded-lg"></p><div id="hunt-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"></div><div class="mt-8 text-center"><button onclick="checkMorphemeHunt()" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-8 rounded-lg text-lg">Check</button><p id="hunt-score" class="mt-4 text-lg font-medium"></p></div></template>
+    <template id="spelling-chaining-template"><header class="flex items-center justify-between mb-8"><div><button onclick="showPage('page-activity-menu')" class="flex items-center text-slate-600 hover:text-slate-900 font-medium"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 mr-2"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>Back</button><h1 class="text-3xl font-bold text-slate-900 mt-2">Spelling Chaining</h1></div><button onclick="generateSpellingChaining()" class="bg-teal-500 hover:bg-teal-600 text-white font-bold py-2 px-4 rounded-lg">New Chain</button></header><div id="chaining-container" class="space-y-3 bg-white p-6 rounded-2xl shadow-md border"></div></template>
+
+    <script>
+        // --- DATA STORE ---
+        const morphemes = {
+            prefixes: ["un-","re-","dis-","semi-","sub-","mis-","multi-","pre-","trans-","non-","fore-","inter-","over-","uni-","bi-","tri-"],
+            suffixes: ["-s","-ing","-ed","-ly","-er","-est","-ful","-less","-tion","-able","-ible","-ure"],
+            bases: ["aqua","aud","bio","port","rupt","scrib","spect","struct","tract","vid","ject","bene","dict","phon","photo"]
+        };
+        
+        const activityData = {
+            wordSums:{"un-":[{sum:"un + happy",result:"unhappy"},{sum:"un + able",result:"unable"},{sum:"un + do",result:"undo"},{sum:"un + common",result:"uncommon"},{sum:"un + tied",result:"untied"}],"re-":[{sum:"re + build",result:"rebuild"},{sum:"re + view",result:"review"},{sum:"re + play",result:"replay"},{sum:"re + fill",result:"refill"},{sum:"re + visit",result:"revisit"}],"dis-":[{sum:"dis + agree",result:"disagree"},{sum:"dis + like",result:"dislike"},{sum:"dis + connect",result:"disconnect"},{sum:"dis + honest",result:"dishonest"},{sum:"dis + appear",result:"disappear"}],"semi-":[{sum:"semi + circle",result:"semicircle"},{sum:"semi + final",result:"semifinal"},{sum:"semi + conscious",result:"semiconscious"},{sum:"semi + formal",result:"semiformal"},{sum:"semi + colon",result:"semicolon"}],"sub-":[{sum:"sub + way",result:"subway"},{sum:"sub + marine",result:"submarine"},{sum:"sub + merge",result:"submerge"},{sum:"sub + tract",result:"subtract"},{sum:"sub + zero",result:"subzero"}],"mis-":[{sum:"mis + spell",result:"misspell"},{sum:"mis + lead",result:"mislead"},{sum:"mis + trust",result:"mistrust"},{sum:"mis + understand",result:"misunderstand"},{sum:"mis + behave",result:"misbehave"}],"multi-":[{sum:"multi + task",result:"multitask"},{sum:"multi + color",result:"multicolor"},{sum:"multi + cultural",result:"multicultural"},{sum:"multi + ply",result:"multiply"},{sum:"multi + vitamin",result:"multivitamin"}],"pre-":[{sum:"pre + view",result:"preview"},{sum:"pre + heat",result:"preheat"},{sum:"pre + order",result:"preorder"},{sum:"pre + school",result:"preschool"},{sum:"pre + judge",result:"prejudge"}],"trans-":[{sum:"trans + port",result:"transport"},{sum:"trans + plant",result:"transplant"},{sum:"trans + form",result:"transform"},{sum:"trans + late",result:"translate"},{sum:"trans + act + ion",result:"transaction"}],"non-":[{sum:"non + sense",result:"nonsense"},{sum:"non + stop",result:"nonstop"},{sum:"non + fat",result:"nonfat"},{sum:"non + profit",result:"nonprofit"},{sum:"non + fiction",result:"nonfiction"}],"fore-":[{sum:"fore + see",result:"foresee"},{sum:"fore + head",result:"forehead"},{sum:"fore + cast",result:"forecast"},{sum:"fore + ground",result:"foreground"},{sum:"fore + tell",result:"foretell"}],"inter-":[{sum:"inter + act",result:"interact"},{sum:"inter + view",result:"interview"},{sum:"inter + national",result:"international"},{sum:"inter + rupt",result:"interrupt"},{sum:"inter + state",result:"interstate"}],"over-":[{sum:"over + flow",result:"overflow"},{sum:"over + cook",result:"overcook"},{sum:"over + look",result:"overlook"},{sum:"over + react",result:"overreact"},{sum:"over + confident",result:"overconfident"}],"uni-":[{sum:"uni + form",result:"uniform"},{sum:"uni + cycle",result:"unicycle"},{sum:"uni + verse",result:"universe"},{sum:"uni + son",result:"unison"},{sum:"uni + fy",result:"unify"}],"bi-":[{sum:"bi + cycle",result:"bicycle"},{sum:"bi + weekly",result:"biweekly"},{sum:"bi + plane",result:"biplane"},{sum:"bi + lingual",result:"lingual"},{sum:"bi + sect",result:"bisect"}],"tri-":[{sum:"tri + angle",result:"triangle"},{sum:"tri + pod",result:"tripod"},{sum:"tri + cycle",result:"tricycle"},{sum:"tri + logy",result:"trilogy"},{sum:"tri + sect",result:"trisect"}],"-s":[{sum:"cat + s",result:"cats"},{sum:"dog + s",result:"dogs"},{sum:"run + s",result:"runs"},{sum:"book + s",result:"books"},{sum:"tree + s",result:"trees"}],"-ing":[{sum:"runn + ing",result:"running"},{sum:"jump + ing",result:"jumping"},{sum:"read + ing",result:"reading"},{sum:"sing + ing",result:"singing"},{sum:"work + ing",result:"working"}],"-ed":[{sum:"jump + ed",result:"jumped"},{sum:"walk + ed",result:"walked"},{sum:"play + ed",result:"played"},{sum:"look + ed",result:"looked"},{sum:"ask + ed",result:"asked"}],"-ly":[{sum:"quick + ly",result:"quickly"},{sum:"soft + ly",result:"softly"},{sum:"loud + ly",result:"loudly"},{sum:"brave + ly",result:"bravely"},{sum:"calm + ly",result:"calmly"}],"-er":[{sum:"teach + er",result:"teacher"},{sum:"fast + er",result:"faster"},{sum:"work + er",result:"worker"},{sum:"strong + er",result:"stronger"},{sum:"paint + er",result:"painter"}],"-est":[{sum:"fast + est",result:"fastest"},{sum:"tall + est",result:"tallest"},{sum:"small + est",result:"smallest"},{sum:"cold + est",result:"coldest"},{sum:"long + est",result:"longest"}],"-ful":[{sum:"hope + ful",result:"hopeful"},{sum:"care + ful",result:"careful"},{sum:"joy + ful",result:"joyful"},{sum:"wonder + ful",result:"wonderful"},{sum:"pain + ful",result:"painful"}],"-less":[{sum:"fear + less",result:"fearless"},{sum:"hope + less",result:"hopeless"},{sum:"end + less",result:"endless"},{sum:"care + less",result:"careless"},{sum:"use + less",result:"useless"}],"-tion":[{sum:"act + ion",result:"action"},{sum:"protect + ion",result:"protection"},{sum:"educate + ion",result:"education"},{sum:"create + ion",result:"creation"},{sum:"direct + ion",result:"direction"}],"-able":[{sum:"read + able",result:"readable"},{sum:"port + able",result:"portable"},{sum:"comfort + able",result:"comfortable"},{sum:"break + able",result:"breakable"},{sum:"accept + able",result:"acceptable"}],"-ible":[{sum:"aud + ible",result:"audible"},{sum:"vis + ible",result:"visible"},{sum:"flex + ible",result:"flexible"},{sum:"revers + ible",result:"reversible"},{sum:"access + ible",result:"accessible"}],"-ure":[{sum:"press + ure",result:"pressure"},{sum:"creat + ure",result:"creature"},{sum:"mix + ure",result:"mixture"},{sum:"fail + ure",result:"failure"},{sum:"en + close + ure",result:"enclosure"}],aqua:[{sum:"aqua + tic",result:"aquatic"},{sum:"aqua + marine",result:"aquamarine"},{sum:"aqua + duct",result:"aqueduct"},{sum:"aqua + plane",result:"aquaplane"}],aud:[{sum:"aud + ible",result:"audible"},{sum:"aud + io",result:"audio"},{sum:"aud + ience",result:"audience"},{sum:"in + aud + ible",result:"inaudible"}],bio:[{sum:"bio + logy",result:"biology"},{sum:"bio + graphy",result:"biography"},{sum:"anti + bio + tic",result:"antibiotic"},{sum:"auto + bio + graphy",result:"autobiography"}],port:[{sum:"trans + port",result:"transport"},{sum:"re + port",result:"report"},{sum:"im + port",result:"import"},{sum:"ex + port",result:"export"},{sum:"sup + port",result:"support"}],rupt:[{sum:"e + rupt",result:"erupt"},{sum:"dis + rupt",result:"disrupt"},{sum:"inter + rupt",result:"interrupt"},{sum:"bank + rupt",result:"bankrupt"},{sum:"cor + rupt",result:"corrupt"}],scrib:[{sum:"de + scribe",result:"describe"},{sum:"sub + scribe",result:"subscribe"},{sum:"pre + scribe",result:"prescribe"},{sum:"in + scribe",result:"inscribe"},{sum:"tran + scribe",result:"transcribe"}],spect:[{sum:"in + spect",result:"inspect"},{sum:"re + spect",result:"respect"},{sum:"pro + spect",result:"prospect"},{sum:"retro + spect",result:"retrospect"},{sum:"spect + ator",result:"spectator"}],struct:[{sum:"con + struct",result:"construct"},{sum:"in + struct",result:"instruct"},{sum:"de + struct + ion",result:"destruction"},{sum:"ob + struct",result:"obstruct"},{sum:"struct + ure",result:"structure"}],tract:[{sum:"at + tract",result:"attract"},{sum:"sub + tract",result:"subtract"},{sum:"re + tract",result:"retract"},{sum:"dis + tract",result:"distract"},{sum:"con + tract",result:"contract"}],vid:[{sum:"vid + eo",result:"video"},{sum:"e + vid + ent",result:"evident"},{sum:"pro + vide",result:"provide"},{sum:"in + vid + ious",result:"invidious"}],ject:[{sum:"pro + ject",result:"project"},{sum:"re + ject",result:"reject"},{sum:"in + ject",result:"inject"},{sum:"e + ject",result:"eject"},{sum:"ob + ject",result:"object"}],bene:[{sum:"bene + fit",result:"benefit"},{sum:"bene + volent",result:"benevolent"},{sum:"bene + diction",result:"benediction"},{sum:"bene + factor",result:"benefactor"}],dict:[{sum:"pre + dict",result:"predict"},{sum:"contra + dict",result:"contradict"},{sum:"dict + ate",result:"dictate"},{sum:"dict + ionary",result:"dictionary"},{sum:"ver + dict",result:"verdict"}],phon:[{sum:"tele + phone",result:"telephone"},{sum:"sym + phony",result:"symphony"},{sum:"micro + phone",result:"microphone"},{sum:"phono + graph",result:"phonograph"},{sum:"headphones",result:"headphones"}],photo:[{sum:"photo + graph",result:"photograph"},{sum:"photo + synthesis",result:"photosynthesis"},{sum:"tele + photo",result:"telephoto"},{sum:"photo + copy",result:"photocopy"}]},
+            fillInBlanks:{"un-":{words:["unhappy","unusual","unable","untie","unfold"],sentences:["He was ___ with his test score.","It is ___ for it to be this warm.","I was ___ to lift the heavy box.","Can you help me ___ this knot?","Watch the flower ___ its petals."],answers:["unhappy","unusual","unable","untie","unfold"]},"re-":{words:["rebuild","review","replay","return","recycle"],sentences:["They will ___ the old house.","Please ___ your notes before the test.","The referee will ___ the last move.","When will you ___ the book?","We should ___ plastic bottles."],answers:["rebuild","review","replay","return","recycle"]},"dis-":{words:["disagree","dislike","disconnect","dishonest","disobey"],sentences:["I ___ with your opinion.","Many people ___ spiders.","Please ___ the power.","The politician was very ___.","It is wrong to ___ the rules."],answers:["disagree","dislike","disconnect","dishonest","disobey"]},"semi-":{words:["semicircle","semifinal","semiconscious","semiannual"],sentences:["The moon looked like a perfect ___.","Our team won the ___ game.","After the accident, he was only ___.","The company has a ___ sale."],answers:["semicircle","semifinal","semiconscious","semiannual"]},"sub-":{words:["subway","submarine","submerge","subtract","subzero"],sentences:["We took the ___ to get downtown.","The ___ traveled deep under the sea.","The diver will ___ into the water.","You must ___ the smaller number.","The temperatures were ___."],answers:["subway","submarine","submerge","subtract","subzero"]},"mis-":{words:["misspell","mislead","mistrust","misunderstand","misbehave"],sentences:["Be careful not to ___ any words.","The tricky ad can ___ customers.","I ___ people who are not honest.","Sometimes I ___ the instructions.","The puppy will ___ if not trained."],answers:["misspell","mislead","mistrust","misunderstand","misbehave"]},"multi-":{words:["multitask","multicolor","multicultural","multiply","multivitamin"],sentences:["It is hard to ___ effectively.","She wore a bright ___ jacket.","We live in a ___ society.","If you ___ 2 by 3, you get 6.","I take a ___ every day."],answers:["multitask","multicolor","multicultural","multiply","multivitamin"]},"pre-":{words:["preview","preheat","preorder","preschool","prejudge"],sentences:["We saw a ___ of the new movie.","___ the oven to 350 degrees.","I will ___ the book online.","My little brother goes to ___.","You should not ___ a book by its cover."],answers:["preview","preheat","preorder","preschool","prejudge"]},"trans-":{words:["transport","transplant","transform","translate","transaction"],sentences:["A ship can ___ cargo overseas.","The surgeon will ___ the organ.","A caterpillar will ___ into a butterfly.","Can you ___ this sentence for me?","The bank recorded the financial ___."],answers:["transport","transplant","transform","translate","transaction"]},"non-":{words:["nonsense","nonstop","nonfat","nonprofit","nonfiction"],sentences:["His explanation was complete ___.","The flight was ___ to New York.","I prefer to drink ___ milk.","The charity is a ___ organization.","I enjoy reading ___ books about history."],answers:["nonsense","nonstop","nonfat","nonprofit","nonfiction"]},"fore-":{words:["foresee","forehead","forecast","foreground","foretell"],sentences:["It is impossible to ___ the future.","He wiped the sweat from his ___.","The weather ___ predicts rain.","The main subject is in the ___.","Some people claim they can ___ events."],answers:["foresee","forehead","forecast","foreground","foretell"]},"inter-":{words:["interact","interview","international","interrupt","interstate"],sentences:["The children ___ well with each other.","She has a job ___ tomorrow.","The Olympic Games are an ___ event.","Please do not ___ me while I'm speaking.","We drove on the ___ highway."],answers:["interact","interview","international","interrupt","interstate"]},"over-":{words:["overflow","overcook","overlook","overreact","overconfident"],sentences:["The water in the tub might ___.","Be careful not to ___ the vegetables.","The hotel room will ___ the ocean.","Try not to ___ to minor problems.","He was ___ and made a simple mistake."],answers:["overflow","overcook","overlook","overreact","overconfident"]},"uni-":{words:["uniform","unicycle","universe","unison","unify"],sentences:["The students must wear a school ___.","The clown rode a ___ in the circus.","The ___ is vast and mysterious.","The choir sang in perfect ___.","The leader tried to ___ the country."],answers:["uniform","unicycle","universe","unison","unify"]},"bi-":{words:["bicycle","biweekly","biplane","bilingual","bisect"],sentences:["I like to ride my ___ in the park.","The magazine is published ___.","The historic ___ flew overhead.","She is ___ in English and Spanish.","A line can ___ an angle into two equal parts."],answers:["bicycle","biweekly","biplane","bilingual","bisect"]},"tri-":{words:["triangle","tripod","tricycle","trilogy","trio"],sentences:["A ___ has three sides.","The photographer used a ___ for stability.","The toddler rode his new ___.","It is the final book in the ___.","A musical group of three is called a ___."],answers:["triangle","tripod","tricycle","trilogy","trio"]},"-s":{words:["runs","cats","trees","books","chairs"],sentences:["He ___ very fast.","The ___ are sleeping.","The ___ are tall.","I have many ___.","We need more ___."],answers:["runs","cats","trees","books","chairs"]},"-ing":{words:["running","singing","reading","working","playing"],sentences:["I am ___ a race tomorrow.","She is ___ in the choir.","He enjoys ___ novels.","My father is ___ late tonight.","The children are ___ in the park."],answers:["running","singing","reading","working","playing"]},"-ed":{words:["walked","jumped","played","looked","asked"],sentences:["We ___ to the store yesterday.","The frog ___ into the pond.","They ___ soccer after school.","She ___ at the beautiful painting.","I ___ a question in class."],answers:["walked","jumped","played","looked","asked"]},"-ly":{words:["quickly","softly","loudly","bravely","calmly"],sentences:["She ran ___ to catch the bus.","He spoke ___ so as not to wake the baby.","The music was playing too ___.","The knight fought ___.","She approached the situation ___."],answers:["quickly","softly","loudly","bravely","calmly"]},"-er":{words:["teacher","worker","painter","stronger","faster"],sentences:["My ___ is very helpful.","The ___ finished the construction job.","The ___ created a beautiful landscape.","He is much ___ than his brother.","A cheetah is ___ than a lion."],answers:["teacher","worker","painter","stronger","faster"]},"-est":{words:["fastest","tallest","smallest","coldest","longest"],sentences:["He is the ___ runner on the team.","That is the ___ building in the city.","This is the ___ puppy in the litter.","It was the ___ day of the year.","That was the ___ movie I have ever seen."],answers:["fastest","tallest","smallest","coldest","longest"]},"-ful":{words:["hopeful","careful","joyful","wonderful","painful"],sentences:["She was ___ she would win.","Be ___ when you cross the street.","The holiday season is a ___ time.","We had a ___ vacation.","The injury was very ___."],answers:["hopeful","careful","joyful","wonderful","painful"]},"-less":{words:["fearless","hopeless","endless","careless","useless"],sentences:["The firefighter was ___.","The situation seemed ___.","The desert seemed ___.","His ___ mistake cost them the game.","This broken tool is ___."],answers:["fearless","hopeless","endless","careless","useless"]},"-tion":{words:["action","protection","education","creation","direction"],sentences:["We need to take immediate ___.","A helmet provides ___ for your head.","A good ___ is important.","The artist's latest ___ is a sculpture.","Which ___ is the store?"],answers:["action","protection","education","creation","direction"]},"-able":{words:["readable","portable","comfortable","breakable","acceptable"],sentences:["Your handwriting is very ___.","A laptop is a ___ computer.","This chair is very ___.","That glass is ___, so be careful.","That behavior is not ___."],answers:["readable","portable","comfortable","breakable","acceptable"]},"-ible":{words:["audible","visible","flexible","reversible","accessible"],sentences:["Her whisper was barely ___.","The mountain was ___ from miles away.","A gymnast must be very ___.","The jacket is ___, with two different colors.","The building is ___ to wheelchairs."],answers:["audible","visible","flexible","reversible","accessible"]},"-ure":{words:["pressure","creature","mixture","failure","enclosure"],sentences:["He felt the ___ of the deadline.","What a strange ___ that is!","The cake is a ___ of flour, sugar, and eggs.","Do not be afraid of ___.","The lions are in a large ___."],answers:["pressure","creature","mixture","failure","enclosure"]},aqua:{words:["aquatic","aquamarine","aqueduct","aquarium"],sentences:["Fish are ___ animals.","Her ring had a beautiful ___ stone.","The ancient Romans built an ___.","We saw sharks at the ___."],answers:["aquatic","aquamarine","aqueduct","aquarium"]},aud:{words:["audience","audible","auditorium","audition","audio"],sentences:["The ___ clapped loudly.","His voice was barely ___.","The play was in the school ___.","She has an ___ for the role.","Please check the ___ settings."],answers:["audience","audible","auditorium","audition","audio"]},bio:{words:["biology","biography","antibiotic","autobiography","bionic"],sentences:["In ___ class, we study living things.","I read a ___ of Abraham Lincoln.","The doctor prescribed an ___.","She wrote an ___ about her life.","The hero had a ___ arm."],answers:["biology","biography","antibiotic","autobiography","bionic"]},port:{words:["portable","report","transport","porter","important"],sentences:["My new laptop is very ___.","The journalist filed her ___.","We use a truck to ___ goods.","The ___ carried our bags.","It is ___ to listen."],answers:["portable","report","transport","porter","important"]},rupt:{words:["erupt","disrupt","interrupt","bankrupt","abrupt"],sentences:["The volcano is expected to ___.","Please do not ___ the class.","It is rude to ___ people.","The company went ___.","The car came to an ___ stop."],answers:["erupt","disrupt","interrupt","bankrupt","abrupt"]},scrib:{words:["describe","subscribe","prescribe","scribble","manuscript"],sentences:["Can you ___ what you saw?","I will ___ to the magazine.","The doctor will ___ medicine.","Don't ___ in your textbook.","The author submitted the ___."],answers:["describe","subscribe","prescribe","scribble","manuscript"]},spect:{words:["inspect","respect","prospect","spectator","perspective"],sentences:["The mechanic will ___ the car.","You should ___ your elders.","The ___ of winning was exciting.","I was a ___ at the game.","Look at it from my ___."],answers:["inspect","respect","prospect","spectator","perspective"]},struct:{words:["construction","structure","instruction","obstruct","destruct"],sentences:["The building is under ___.","The ___ of the bridge is strong.","Please follow the ___ manual.","Do not ___ the emergency exit.","The old building is scheduled to self-___."],answers:["construction","structure","instruction","obstruct","destruct"]},tract:{words:["attract","tractor","subtract","distract","retract"],sentences:["A magnet will ___ iron.","The farmer used a ___.","You need to ___ the numbers.","The loud noise will ___ you.","The newspaper had to ___ the story."],answers:["attract","tractor","subtract","distract","retract"]},vid:{words:["video","evident","provide","invisible","vision"],sentences:["Let's watch a ___ tonight.","It was ___ that he was not happy.","The hotel will ___ towels.","With the magic ring, he became ___.","Birds have excellent ___."],answers:["video","evident","provide","invisible","vision"]},ject:{words:["projector","reject","eject","inject","subject"],sentences:["The teacher used a ___.","The editor might ___ the manuscript.","___ the disk from the computer.","The nurse will ___ the medicine.","What is your favorite ___ in school?"],answers:["projector","reject","eject","inject","subject"]},bene:{words:["benefit","benevolent","benediction","benefactor","beneficial"],sentences:["Exercise has a great ___ for health.","The king was a ___ ruler.","The priest gave a ___.","An anonymous ___ donated the money.","Eating vegetables is ___."],answers:["benefit","benevolent","benediction","benefactor","beneficial"]},dict:{words:["predict","contradict","dictate","dictionary","verdict"],sentences:["It is hard to ___ the future.","Don't ___ what I just said.","I will ___ a letter to you.","Look up the word in the ___.","The jury reached a ___."],answers:["predict","contradict","dictate","dictionary","verdict"]},phon:{words:["telephone","symphony","microphone","headphones","phonics"],sentences:["Please answer the ___.","We listened to the ___.","Speak clearly into the ___.","I use ___ to listen to music.","Children learn to read with ___."],answers:["telephone","symphony","microphone","headphones","phonics"]},photo:{words:["photograph","photosynthesis","telephoto","photocopy","photographer"],sentences:["She took a beautiful ___.","Plants use ___ to make food.","He used a ___ lens to zoom in.","I need a ___ of this document.","The ___ captured the perfect moment."],answers:["photograph","photosynthesis","telephoto","photocopy","photographer"]}},
+            wordMatrix:{"un-":{link:"port"},"re-":{link:"port"},"dis-":{link:"tract"},"semi-":{link:"struct"},"sub-":{link:"tract"},"mis-":{link:"scrib"},"multi-":{link:"struct"},"pre-":{link:"scrib"},"trans-":{link:"port"},"non-":{link:"port"},"fore-":{link:"scrib"},"inter-":{link:"rupt"},"over-":{link:"tract"},"uni-":{link:"struct"},"bi-":{link:"ject"},"tri-":{link:"ject"},"-s":{link:"port"},"-ing":{link:"port"},"-ed":{link:"port"},"-ly":{link:"struct"},"-er":{link:"port"},"-est":{link:"tract"},"-ful":{link:"spect"},"-less":{link:"port"},"-tion":{link:"struct"},"-able":{link:"port"},"-ible":{link:"aud"},"-ure":{link:"struct"},port:{prefixes:["re-","im-","ex-","trans-","sup-","un-"],bases:["port"],suffixes:["-s","-ed","-er","-ing","-able","-ation"],solutions:["port","ports","ported","porter","porting","portable","report","reports","reporter","reporting","import","importer","export","exporter","transport","transportation","support","supporter","unported"]},struct:{prefixes:["con-","de-","re-","in-","ob-","multi-"],bases:["struct"],suffixes:["-s","-ed","-ing","-ion","-ive","-ure","-ly"],solutions:["struct","structure","structures","construct","constructs","constructed","constructing","construction","constructive","deconstruct","reconstruct","reconstruction","instruct","instructs","instructed","instructing","instruction","instructive","obstruct","obstruction"]},tract:{prefixes:["re-","sub-","at-","dis-","con-","pro-","over-"],bases:["tract"],suffixes:["-s","-ed","-ing","-ion","-or","-ive","-est"],solutions:["tract","tractor","retract","subtract","attract","distract","contract","protract","traction","attractive"]},spect:{prefixes:["in-","re-","pro-","retro-","ex-"],bases:["spect"],suffixes:["-s","-ed","-ing","-ion","-or","-ive","-ful"],solutions:["spectator","inspect","inspection","respect","prospect","retrospect","expect","respective","respectful"]},rupt:{prefixes:["dis-","inter-","e-","ab-","cor-"],bases:["rupt"],suffixes:["-s","-ed","-ing","-ion"],solutions:["rupture","disrupt","disruption","interrupt","erupt","eruption","abrupt","corrupt","corruption"]},scrib:{prefixes:["de-","sub-","pre-","in-","tran-","mis-","fore-"],bases:["scrib","script"],suffixes:["-s","-ed","-ing","-ion","-ure"],solutions:["scribe","describe","subscribe","prescribe","inscribe","transcribe","script","scripture","prescription","inscription"]},aud:{prefixes:["in-"],bases:["aud"],suffixes:["-io","-ible","-ience","-ition","-itorium"],solutions:["audio","audible","inaudible","audience","audition","auditorium"]},ject:{prefixes:["pro-","re-","in-","e-","ob-","sub-","bi-","tri-"],bases:["ject"],suffixes:["-s","-ed","-ing","-ion","-ile","-or"],solutions:["project","projector","projectile","reject","rejection","inject","injection","eject","object","objection","subject","bisect","trisect"]},dict:{prefixes:["pre-","contra-","ver-"],bases:["dict"],suffixes:["-s","-ate","-ion","-ator","-ionary"],solutions:["dictate","dictation","dictator","predict","prediction","contradict","contradiction","verdict","dictionary"]},vid:{prefixes:["in-","pro-","e-"],bases:["vid","vis"],suffixes:["-eo","-ent","-ion","-ible","-itor"],solutions:["video","evident","provide","vision","visible","invisible","visitor"]},phon:{prefixes:["tele-","micro-","sym-"],bases:["phon"],suffixes:["-e","-ic","-ics","-y"],solutions:["phone","phonetic","phonics","telephone","microphone","symphony"]},photo:{prefixes:["tele-"],bases:["photo"],suffixes:["-graph","-graphy","-ic"],solutions:["photograph","photography","photographic","telephoto"]},bene:{prefixes:[],bases:["bene"],suffixes:["-fit","-volent","-factor","-diction"],solutions:["benefit","benevolent","benefactor","benediction"]},bio:{prefixes:["anti-","auto-"],bases:["bio"],suffixes:["-logy","-graphy","-tic"],solutions:["biology","biography","antibiotic","autobiography"]},aqua:{prefixes:[],bases:["aqua"],suffixes:["-tic","-marine","-duct","-rium"],solutions:["aquatic","aquamarine","aqueduct","aquarium"]}},
+            morphemeHunt:{"un-":{words:["unhappy","undo","unusual","uncle","under","unit","unclear","unsafe"],correct:["unhappy","undo","unusual","unclear","unsafe"]},"re-":{words:["reread","rewrite","return","real","ready","reach","red","react","remake"],correct:["reread","rewrite","return","react","remake"]},"dis-":{words:["disagree","distant","dish","discover","discuss","disk"],correct:["disagree","discover","discuss"]},"semi-":{words:["semicircle","similar","semifinal","simple","semicolon"],correct:["semicircle","semifinal","semicolon"]},"sub-":{words:["subway","subtle","subject","subtract","substitute","sublime"],correct:["subway","subject","subtract","substitute"]},"mis-":{words:["mistake","missile","mislead","mister","misunderstand"],correct:["mistake","mislead","misunderstand"]},"multi-":{words:["multiply","multiple","mummy","multitude","muffin"],correct:["multiply","multiple","multitude"]},"pre-":{words:["preview","pretty","prepare","predict","precious"],correct:["preview","prepare","predict"]},"trans-":{words:["transport","translate","trap","transient","trash"],correct:["transport","translate","transient"]},"non-":{words:["nonsense","none","nonstop","noon","nonprofit"],correct:["nonsense","nonstop","nonprofit"]},"fore-":{words:["forest","forecast","foreign","foresee","forgive"],correct:["forecast","foresee"]},"inter-":{words:["internet","internal","interrupt","interest","interview"],correct:["internet","internal","interrupt","interview"]},"over-":{words:["over","oval","overlook","overwhelm","owe"],correct:["overlook","overwhelm"]},"uni-":{words:["unit","uniform","union","unicycle","unique"],correct:["uniform","union","unicycle"]},"bi-":{words:["big","bicycle","bingo","bisect","bilingual"],correct:["bicycle","bisect","bilingual"]},"tri-":{words:["trip","triangle","tricycle","triumph","trivial"],correct:["triangle","tricycle","trivial"]},"-s":{words:["cats","his","runs","is","pass","bus"],correct:["cats","runs","pass"]},"-ing":{words:["running","king","sing","morning","during","thing"],correct:["running","sing","morning"]},"-ed":{words:["jumped","red","need","walked","bored","bread"],correct:["jumped","need","walked","bored"]},"-ly":{words:["quickly","family","softly","jelly","friendly","lonely"],correct:["quickly","softly","friendly","lonely"]},"-er":{words:["teacher","her","worker","fewer","faster","river"],correct:["teacher","worker","faster"]},"-est":{words:["forest","tallest","request","honest","smallest"],correct:["tallest","smallest"]},"-ful":{words:["beautiful","full","careful","fool","wonderful","pull"],correct:["beautiful","careful","wonderful"]},"-less":{words:["endless","unless","careless","bless","hopeless"],correct:["endless","careless","hopeless"]},"-tion":{words:["action","nation","question","mention","cushion"],correct:["action","nation","question","mention"]},"-able":{words:["table","readable","cable","portable","vegetable"],correct:["readable","portable"]},"-ible":{words:["audible","bible","visible","scribble","flexible"],correct:["audible","visible","flexible"]},"-ure":{words:["pure","pressure","sure","creature","future"],correct:["pressure","creature","future"]},aqua:{words:["aquarium","quality","aquatic","equal","aqueduct"],correct:["aquarium","aquatic","aqueduct"]},aud:{words:["audio","author","audible","fraud","applaud","audience"],correct:["audio","audible","applaud","audience"]},bio:{words:["biology","biography","bite","bias","antibiotic"],correct:["biology","biography","antibiotic"]},port:{words:["portable","important","sport","airport","report","portion","portfolio"],correct:["portable","important","sport","airport","report","portfolio"]},rupt:{words:["erupt","interrupt","disrupt","rut","corrupt","rush"],correct:["erupt","interrupt","disrupt","corrupt"]},scrib:{words:["scribe","scrub","describe","script","prescribe","inscribe"],correct:["scribe","describe","script","prescribe","inscribe"]},spect:{words:["respect","special","inspect","aspect","expect","suspect"],correct:["respect","inspect","aspect","expect","suspect"]},struct:{words:["structure","true","instruct","street","construct","obstruct"],correct:["structure","instruct","construct","obstruct"]},tract:{words:["tractor","track","attract","trace","contract","subtract"],correct:["tractor","attract","contract","subtract"]},vid:{words:["video","vivid","evident","divide","provide"],correct:["video","evident","provide"]},ject:{words:["project","jet","reject","object","subjective","jelly"],correct:["project","reject","object","subjective"]},bene:{words:["benefit","bent","benevolent","besides","benefactor"],correct:["benefit","benevolent","benefactor"]},dict:{words:["dictionary","addict","predict","indict","verdict"],correct:["dictionary","addict","predict","indict","verdict"]},phon:{words:["phone","phantom","symphony","phony","microphone"],correct:["phone","symphony","microphone"]},photo:{words:["photograph","phone","photosynthesis","photocopy","phony"],correct:["photograph","photosynthesis","photocopy"]}},
+            spellingChaining:{"un-":{link:"port"},"re-":{link:"port"},"dis-":{link:"tract"},"sub-":{link:"tract"},"pre-":{link:"scrib"},"inter-":{link:"rupt"},"trans-":{link:"port"},"semi-":{link:"struct"},"mis-":{link:"scrib"},"multi-":{link:"struct"},"non-":{link:"port"},"fore-":{link:"scrib"},"over-":{link:"tract"},"uni-":{link:"struct"},"bi-":{link:"ject"},"tri-":{link:"ject"},"-s":{link:"port"},"-ing":{link:"port"},"-ed":{link:"port"},"-ly":{link:"struct"},"-er":{link:"port"},"-est":{link:"tract"},"-ful":{link:"spect"},"-less":{link:"port"},"-tion":{link:"struct"},"-able":{link:"port"},"-ible":{link:"aud"},"-ure":{link:"struct"},port:[[{start:"port",instruction:"Add 're-'",result:"report"},{instruction:"Add '-er'",result:"reporter"},{instruction:"Add '-s'",result:"reporters"}],[{start:"port",instruction:"Add 'im-'",result:"import"},{instruction:"Add '-ant'",result:"important"},{instruction:"Add 'un-'",result:"unimportant"}]],struct:[[{start:"struct",instruction:"Add '-ure'",result:"structure"},{instruction:"Add 'con-'",result:"constructure"},{instruction:"Change to '-ion'",result:"construction"}],[{start:"construct",instruction:"Add '-ion'",result:"construction"},{instruction:"Add 're-'",result:"reconstruction"},{instruction:"Remove '-ion' and add '-ive'",result:"reconstructive"}]],scrib:[[{start:"scribble",instruction:"Change 'le' to '-e'",result:"scribe"},{instruction:"Add 'de-'",result:"describe"},{instruction:"Add '-d'",result:"described"}],[{start:"script",instruction:"Add '-ure'",result:"scripture"},{instruction:"Add 'pre-'",result:"prescripture"},{instruction:"Change 'pre' to 'in'",result:"inscripture"}]],spect:[[{start:"spectator",instruction:"Remove '-ator'",result:"spect"},{instruction:"Add 'in-'",result:"inspect"},{instruction:"Add '-ion'",result:"inspection"}],[{start:"respect",instruction:"Add '-ful'",result:"respectful"},{instruction:"Add '-ly'",result:"respectfully"},{instruction:"Add 'dis-'",result:"disrespectfully"}]],rupt:[[{start:"rupture",instruction:"Add 'inter-'",result:"interrupt"},{instruction:"Change 'inter' to 'dis'",result:"disrupt"},{instruction:"Add '-ion'",result:"disruption"}],[{start:"erupt",instruction:"Add '-ion'",result:"eruption"},{instruction:"Change '-ion' to '-ive'",result:"eruptive"},{instruction:"Change 'e' to 'cor'",result:"corruptive"}]],tract:[[{start:"tract",instruction:"Add '-or'",result:"tractor"},{instruction:"Add 'sub-'",result:"subtractor"},{instruction:"Change 'sub' to 'con'",result:"contractor"}],[{start:"attract",instruction:"Add '-ion'",result:"attraction"},{instruction:"Change '-ion' to '-ive'",result:"attractive"},{instruction:"Add 'un-'",result:"unattractive"}]],dict:[[{start:"dictate",instruction:"Add '-or'",result:"dictator"},{instruction:"Add '-ship'",result:"dictatorship"},{instruction:"Remove '-ship'",result:"dictator"}],[{start:"predict",instruction:"Add '-ion'",result:"prediction"},{instruction:"Change '-ion' to '-able'",result:"predictable"},{instruction:"Add 'un-'",result:"unpredictable"}]],ject:[[{start:"eject",instruction:"Add '-ion'",result:"ejection"},{instruction:"Change 'e' to 're'",result:"rejection"},{instruction:"Change 're' to 'pro'",result:"projection"}],[{start:"subject",instruction:"Add '-ive'",result:"subjective"},{instruction:"Add '-ly'",result:"subjectively"},{instruction:"Remove '-ly'",result:"subjective"}]],aud:[[{start:"audio",instruction:"Change 'o' to 'ence'",result:"audience"},{instruction:"Remove 'ence', add 'tion'",result:"audition"},{instruction:"Add '-ing'",result:"auditioning"}]],vid:[[{start:"video",instruction:"Remove 'o', add 'ent'",result:"vident"},{instruction:"Add 'e-'",result:"evident"},{instruction:"Add '-ly'",result:"evidently"}]],bene:[[{start:"benefit",instruction:"Add '-ial'",result:"beneficial"},{instruction:"Remove 'itial', add 'factor'",result:"benefactor"},{instruction:"Change 'factor' to 'volent'",result:"benevolent"}]],bio:[[{start:"biology",instruction:"Change '-logy' to '-graphy'",result:"biography"},{instruction:"Add 'auto-'",result:"autobiography"},{instruction:"Remove 'auto-'",result:"biography"}]],phon:[[{start:"phone",instruction:"Add 'tele-'",result:"telephone"},{instruction:"Add '-ic'",result:"telephonic"},{instruction:"Remove 'tele-'",result:"phonic"}]],photo:[[{start:"photograph",instruction:"Add '-er'",result:"photographer"},{instruction:"Add '-y'",result:"photography"},{instruction:"Add '-ic'",result:"photographic"}],],aqua:[[{start:"aqua",instruction:"Add '-tic'",result:"aquatic"},{instruction:"Change 'tic' to 'rium'",result:"aquarium"},{instruction:"Remove 'rium', add 'duct'",result:"aqueduct"}]]}
+        };
+
+        // --- STATE & NAVIGATION ---
+        let currentCategory = '', currentMorpheme = '';
+        const pages = ['page-main-menu', 'page-morpheme-list', 'page-activity-menu', 'page-word-sums', 'page-fill-in-blanks', 'page-word-matrix', 'page-morpheme-hunt', 'page-spelling-chaining'];
+        
+        function showPage(pageId) {
+            pages.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.toggle('hidden', id !== pageId);
+            });
+        }
+        
+        function showMorphemeList(category) {
+            currentCategory = category;
+            const grid = document.getElementById('morpheme-grid');
+            document.getElementById('morpheme-list-title').textContent = category.charAt(0).toUpperCase() + category.slice(1);
+            grid.innerHTML = '';
+            morphemes[category].forEach(morpheme => {
+                const btn = document.createElement('button');
+                btn.className = 'card bg-white p-4 rounded-lg shadow-sm border text-center font-semibold text-slate-800 hover:border-violet-400 hover:text-violet-600';
+                btn.textContent = morpheme;
+                btn.onclick = () => showActivityMenu(morpheme);
+                grid.appendChild(btn);
+            });
+            showPage('page-morpheme-list');
+        }
+
+        function showActivityMenu(morpheme) {
+            currentMorpheme = morpheme;
+            document.getElementById('selected-morpheme-title').textContent = `'${morpheme}'`;
+            document.getElementById('back-to-morpheme-list').onclick = () => showMorphemeList(currentCategory);
+            
+            document.querySelectorAll('#activity-grid .card').forEach(card => {
+                const activityKey = card.getAttribute('onclick').match(/'page-([^']+)'/)[1].replace(/-(\w)/g, (_, c) => c.toUpperCase());
+                let dataEntry = activityData[activityKey]?.[morpheme];
+
+                if (dataEntry?.link) {
+                    dataEntry = activityData[activityKey]?.[dataEntry.link];
+                }
+                
+                card.style.display = dataEntry ? 'block' : 'none';
+            });
+            
+            showPage('page-activity-menu');
+        }
+
+        function showActivityPage(pageId) {
+            showPage(pageId);
+            if (pageId === 'page-word-sums') generateWordSums();
+            if (pageId === 'page-fill-in-blanks') generateClozeActivity();
+            if (pageId === 'page-word-matrix') generateWordMatrix();
+            if (pageId === 'page-morpheme-hunt') generateMorphemeHunt();
+            if (pageId === 'page-spelling-chaining') generateSpellingChaining();
+        }
+        
+        // --- ACTIVITY: WORD SUMS ---
+        let currentWordSums = [];
+        function generateWordSums() {
+            const container = document.getElementById('word-sums-container');
+            const allSums = activityData.wordSums[currentMorpheme] || [];
+            container.innerHTML = '';
+            document.getElementById('word-sums-score').textContent = '';
+            if (allSums.length === 0) {
+                container.innerHTML = '<p class="text-center text-slate-500">No activities available.</p>';
+                return;
+            }
+            currentWordSums = allSums.sort(() => 0.5 - Math.random()).slice(0, 3);
+            currentWordSums.forEach((item, index) => {
+                const el = document.createElement('div');
+                el.className = 'grid grid-cols-1 sm:grid-cols-2 gap-4 items-center';
+                el.innerHTML = `<div class="bg-white p-4 rounded-lg text-center text-lg font-mono shadow-sm border">${item.sum}</div><input type="text" data-index="${index}" class="text-lg p-4 w-full border-2 border-slate-300 rounded-lg" placeholder="Type here...">`;
+                container.appendChild(el);
+            });
+        }
+        function checkWordSums() {
+            let correctCount = 0;
+            document.querySelectorAll('#word-sums-container input').forEach(input => {
+                const index = parseInt(input.dataset.index);
+                const userAnswer = input.value.trim().toLowerCase();
+                const correctAnswer = currentWordSums[index].result;
+                input.classList.remove('border-green-500', 'border-red-500');
+                if (userAnswer === correctAnswer) {
+                    input.classList.add('border-green-500');
+                    correctCount++;
+                } else {
+                    input.classList.add('border-red-500');
+                }
+            });
+            document.getElementById('word-sums-score').textContent = `You got ${correctCount} out of ${currentWordSums.length} correct!`;
+        }
+
+        // --- ACTIVITY: FILL IN THE BLANKS ---
+        let clozeAnswers = [];
+        function generateClozeActivity() {
+            const data = activityData.fillInBlanks[currentMorpheme] || null;
+            const wordBank = document.getElementById('cloze-word-bank');
+            const sentencesContainer = document.getElementById('cloze-sentences');
+            document.getElementById('cloze-score').textContent = '';
+            wordBank.innerHTML = '';
+            sentencesContainer.innerHTML = '';
+            if (!data) {
+                sentencesContainer.innerHTML = '<p class="text-center text-slate-500">No activities available.</p>';
+                return;
+            }
+            clozeAnswers = data.answers;
+            [...data.words].sort(() => 0.5 - Math.random()).forEach(word => {
+                const el = document.createElement('div');
+                el.id = `drag-${word}`;
+                el.textContent = word;
+                el.className = 'draggable bg-sky-100 text-sky-800 font-medium py-2 px-4 rounded-lg border border-sky-200';
+                el.draggable = true;
+                el.addEventListener('dragstart', ev => ev.dataTransfer.setData('text/plain', ev.target.id));
+                wordBank.appendChild(el);
+            });
+            data.sentences.forEach((sentence, index) => {
+                const p = document.createElement('p');
+                p.innerHTML = `${index + 1}. ${sentence.replace('___', `<span class="drop-zone inline-block w-36 h-10 align-middle mx-2 rounded-lg" data-index="${index}"></span>`)}`;
+                sentencesContainer.appendChild(p);
+            });
+            document.querySelectorAll('.drop-zone').forEach(zone => {
+                zone.addEventListener('dragover', e => { e.preventDefault(); e.target.classList.add('drag-over'); });
+                zone.addEventListener('dragleave', e => e.target.classList.remove('drag-over'));
+                zone.addEventListener('drop', e => {
+                    e.preventDefault();
+                    e.target.classList.remove('drag-over');
+                    const id = e.dataTransfer.getData('text/plain');
+                    const draggedEl = document.getElementById(id);
+                    if (e.target.firstChild) wordBank.appendChild(e.target.firstChild);
+                    e.target.appendChild(draggedEl);
+                });
+            });
+        }
+        function checkClozeAnswers() {
+            let correctCount = 0;
+            document.querySelectorAll('.drop-zone').forEach(zone => {
+                const index = parseInt(zone.dataset.index);
+                const word = zone.firstChild?.textContent || "";
+                zone.classList.remove('border-green-500', 'border-red-500', 'border-2');
+                zone.classList.add('border-2');
+                if (word === clozeAnswers[index]) {
+                    zone.classList.add('border-green-500');
+                    correctCount++;
+                } else {
+                    zone.classList.add('border-red-500');
+                }
+            });
+            document.getElementById('cloze-score').textContent = `You got ${correctCount} out of ${clozeAnswers.length} correct!`;
+        }
+        
+        // --- ACTIVITY: WORD MATRIX ---
+        let matrixSolutions = [], matrixFoundWords = [];
+        function generateWordMatrix() {
+            let matrixDataKey = currentMorpheme;
+            const linkData = activityData.wordMatrix[currentMorpheme];
+            if (linkData && linkData.link) {
+                matrixDataKey = linkData.link;
+            }
+            const matrixData = activityData.wordMatrix[matrixDataKey];
+
+            const matrixGrid = document.getElementById('matrix-grid');
+            matrixGrid.innerHTML = '<div><h3 class="font-bold mb-2 border-b-2 pb-1">Prefixes</h3><div id="matrix-prefixes" class="space-y-2"></div></div><div><h3 class="font-bold mb-2 border-b-2 pb-1">Bases</h3><div id="matrix-bases" class="space-y-2"></div></div><div><h3 class="font-bold mb-2 border-b-2 pb-1">Suffixes</h3><div id="matrix-suffixes" class="space-y-2"></div></div>';
+            clearMatrixWord();
+
+            if (!matrixData) {
+                matrixGrid.innerHTML = '<p class="col-span-3 text-center text-slate-500">No matrix available for this morpheme.</p>';
+                matrixSolutions = [];
+                matrixFoundWords = [];
+                updateFoundList();
+                return;
+            }
+
+            matrixSolutions = matrixData.solutions || [];
+            matrixFoundWords = [];
+            updateFoundList();
+
+            const prefixesContainer = document.getElementById('matrix-prefixes');
+            const basesContainer = document.getElementById('matrix-bases');
+            const suffixesContainer = document.getElementById('matrix-suffixes');
+            
+            const createBtn = (morpheme) => {
+                const btn = document.createElement('button');
+                btn.textContent = morpheme;
+                btn.className = 'w-full bg-slate-100 hover:bg-slate-200 p-2 rounded-md font-mono';
+                btn.onclick = () => document.getElementById('matrix-current-word').textContent += morpheme.replace(/[-]/g, '');
+                return btn;
+            };
+
+            matrixData.prefixes.forEach(p => prefixesContainer.appendChild(createBtn(p)));
+            matrixData.bases.forEach(b => basesContainer.appendChild(createBtn(b)));
+            matrixData.suffixes.forEach(s => suffixesContainer.appendChild(createBtn(s)));
+        }
+        function clearMatrixWord() { document.getElementById('matrix-current-word').textContent = ''; }
+        function setFeedback(msg, isErr = false) {
+            const el = document.getElementById('matrix-feedback');
+            el.textContent = msg;
+            el.className = `text-center mt-3 h-6 font-medium ${isErr ? 'text-red-500' : 'text-green-500'}`;
+            setTimeout(() => el.textContent = '', 2000);
+        }
+        function submitMatrixWord() {
+            const word = document.getElementById('matrix-current-word').textContent;
+            if (!word) return;
+            if (matrixSolutions.includes(word)) {
+                if (matrixFoundWords.includes(word)) {
+                    setFeedback('Already found!', true);
+                } else {
+                    matrixFoundWords.push(word);
+                    updateFoundList();
+                    setFeedback('Correct!', false);
+                }
+            } else {
+                setFeedback('Not a valid word.', true);
+            }
+            clearMatrixWord();
+        }
+        function updateFoundList() {
+            const list = document.getElementById('matrix-found-list');
+            list.innerHTML = '';
+            matrixFoundWords.sort().forEach(word => {
+                const item = document.createElement('li');
+                item.className = 'bg-green-100 text-green-800 p-2 rounded text-sm font-mono';
+                item.textContent = word;
+                list.appendChild(item);
+            });
+            document.getElementById('matrix-found-count').textContent = matrixFoundWords.length;
+        }
+
+        // --- ACTIVITY: MORPHEME HUNT ---
+        let huntCorrectAnswers = [];
+        function generateMorphemeHunt() {
+            const data = activityData.morphemeHunt[currentMorpheme];
+            const grid = document.getElementById('hunt-grid');
+            grid.innerHTML = '';
+            document.getElementById('hunt-score').textContent = '';
+            if (!data) {
+                grid.innerHTML = '<p class="col-span-full text-center text-slate-500">No hunt available.</p>';
+                return;
+            }
+            huntCorrectAnswers = data.correct;
+            document.getElementById('hunt-instructions').textContent = `Click on all the words that contain '${currentMorpheme}'.`;
+            [...data.words].sort(() => 0.5 - Math.random()).forEach(word => {
+                const el = document.createElement('button');
+                el.textContent = word;
+                el.className = 'hunt-word border-2 border-slate-300 bg-white p-4 rounded-lg text-center font-medium transition-colors';
+                el.onclick = () => el.classList.toggle('selected');
+                grid.appendChild(el);
+            });
+        }
+        function checkMorphemeHunt() {
+            let correctSelections = 0, incorrectSelections = 0;
+            const totalCorrect = huntCorrectAnswers.length;
+            document.querySelectorAll('.hunt-word').forEach(el => {
+                const word = el.textContent;
+                const isSelected = el.classList.contains('selected');
+                const isCorrect = huntCorrectAnswers.includes(word);
+                el.classList.remove('border-green-500', 'border-red-500');
+                if (isSelected && isCorrect) {
+                    el.classList.add('border-green-500');
+                    correctSelections++;
+                } else if (isSelected && !isCorrect) {
+                    el.classList.add('border-red-500');
+                    incorrectSelections++;
+                } else if (!isSelected && isCorrect) {
+                    el.classList.add('border-red-500');
+                }
+            });
+            document.getElementById('hunt-score').textContent = `You found ${correctSelections} of ${totalCorrect} correct words, with ${incorrectSelections} incorrect selections.`;
+        }
+        
+        // --- ACTIVITY: SPELLING CHAINING ---
+        let chainData = [], currentChainStep = 0;
+        function generateSpellingChaining() {
+            let allChains = activityData.spellingChaining[currentMorpheme];
+            if (allChains && allChains.link) {
+                allChains = activityData.spellingChaining[allChains.link];
+            }
+            allChains = allChains || [];
+
+            currentChainStep = 0;
+            const container = document.getElementById('chaining-container');
+            container.innerHTML = '';
+            
+            if (allChains.length === 0) {
+                container.innerHTML = '<p class="text-center text-slate-500">No chain available.</p>';
+                return;
+            }
+            
+            chainData = allChains[Math.floor(Math.random() * allChains.length)];
+            renderChainStep();
+        }
+        function renderChainStep() {
+            const container = document.getElementById('chaining-container');
+            if (currentChainStep >= chainData.length) {
+                const el = document.createElement('div');
+                el.className = 'text-center p-4 bg-green-100 text-green-800 rounded-lg font-bold';
+                el.textContent = 'Chain Complete!';
+                container.appendChild(el);
+                return;
+            }
+            const step = chainData[currentChainStep];
+            const prevWord = currentChainStep > 0 ? chainData[currentChainStep - 1].result : step.start;
+            const stepEl = document.createElement('div');
+            stepEl.className = 'p-4';
+            stepEl.innerHTML = `<div class="flex flex-wrap items-center gap-4"><span class="text-2xl font-bold font-mono bg-slate-100 px-3 py-1 rounded">${prevWord}</span><span class="text-slate-500 text-2xl">&rarr;</span><span class="text-slate-600 font-medium flex-1">${step.instruction}</span></div><div class="mt-3 flex gap-3"><input id="step-${currentChainStep}-input" class="text-lg p-3 w-full border-2 border-slate-300 rounded-lg" placeholder="Type new word..."><button onclick="checkChainStep()" class="bg-violet-500 hover:bg-violet-600 text-white font-bold px-5 rounded-lg">Go</button></div><p id="step-${currentChainStep}-feedback" class="h-5 mt-1 text-sm font-medium"></p>`;
+            container.appendChild(stepEl);
+            document.getElementById(`step-${currentChainStep}-input`).focus();
+        }
+        function checkChainStep() {
+            const inputEl = document.getElementById(`step-${currentChainStep}-input`);
+            const feedbackEl = document.getElementById(`step-${currentChainStep}-feedback`);
+            const userAnswer = inputEl.value.trim().toLowerCase();
+            const correctAnswer = chainData[currentChainStep].result;
+            inputEl.classList.remove('border-red-500', 'border-green-500');
+            if (userAnswer === correctAnswer) {
+                inputEl.disabled = true;
+                inputEl.classList.add('border-green-500', 'bg-slate-50');
+                feedbackEl.textContent = 'Correct!';
+                feedbackEl.className = 'h-5 mt-1 text-sm font-medium text-green-600';
+                document.querySelectorAll('#chaining-container > div').forEach(el => el.classList.add('opacity-70'));
+                currentChainStep++;
+                renderChainStep();
+            } else {
+                feedbackEl.textContent = 'Not quite, try again.';
+                feedbackEl.className = 'h-5 mt-1 text-sm font-medium text-red-600';
+                inputEl.classList.add('border-red-500');
+            }
+        }
+
+        // --- INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('page-word-sums').innerHTML = document.getElementById('word-sums-template').innerHTML;
+            document.getElementById('page-fill-in-blanks').innerHTML = document.getElementById('fill-in-blanks-template').innerHTML;
+            document.getElementById('page-word-matrix').innerHTML = document.getElementById('word-matrix-template').innerHTML;
+            document.getElementById('page-morpheme-hunt').innerHTML = document.getElementById('morpheme-hunt-template').innerHTML;
+            document.getElementById('page-spelling-chaining').innerHTML = document.getElementById('spelling-chaining-template').innerHTML;
+            showPage('page-main-menu');
+        });
+    </script>
+</body>
+</html>
