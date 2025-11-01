@@ -1,15 +1,28 @@
-import React, { useMemo, useState, useEffect } from "react";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Morphology Lab</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-gray-100">
+  <div id="root"></div>
 
+  <script type="text/babel">
 // ==================================
-// Morphology Lab – React Single‑File App (Fixed)
+// Morphology Lab – React Single‑File App (Browser Build)
 // • Start screen: choose 🥛 Mild or 🌶️ Spicy
 // • Tabs: Prefix / Suffix / Base
 // • 7 Activities (no numbers on buttons)
-// • Morpheme Library: pick any morpheme from a list
-// • Includes a defined <Section/> component (fixes ReferenceError)
-// • Sanity tests in console (added explicit tests)
-// • Behavior per user: picking from Library KEEPS current activity (option 1)
+// • Morpheme Library: pick a morpheme (keeps current activity)
+// • Section component is defined BEFORE use
 // ==================================
+
+const { useMemo, useState, useEffect } = React;
 
 // ---------- DATA (Mild & Spicy separate wordbanks) ----------
 const DATA = {
@@ -284,7 +297,7 @@ const DATA = {
   },
 };
 
-const TABS = ["Prefix", "Suffix", "Base"] as const;
+const TABS = ["Prefix", "Suffix", "Base"];
 const ACTIVITIES = [
   { key: "cloze", label: "Cloze Reading" },
   { key: "matrix", label: "Word Matrix" },
@@ -293,34 +306,28 @@ const ACTIVITIES = [
   { key: "sums", label: "Word Sums" },
   { key: "hunt", label: "Morpheme Hunt" },
   { key: "choose", label: "Choose The Correct" },
-] as const;
-
-type Tab = typeof TABS[number];
-
-type RecordForTab = (typeof DATA)["mild"][keyof (typeof DATA)["mild"]][number];
+];
 
 // ---------- Small UI primitives ----------
-function Badge({ children }: { children: React.ReactNode }) {
+function Badge({ children }) {
   return (
     <span className="inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium">
       {children}
     </span>
   );
 }
-function Pill({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+function Pill({ label, active, onClick }) {
   return (
     <button
       onClick={onClick}
-      className={`rounded-2xl px-4 py-2 text-sm font-semibold shadow-sm transition ${
-        active ? "bg-black text-white" : "bg-white text-gray-800 hover:bg-gray-100 border"
-      }`}
+      className={\`rounded-2xl px-4 py-2 text-sm font-semibold shadow-sm transition \${active ? "bg-black text-white" : "bg-white text-gray-800 hover:bg-gray-100 border"}\`}
     >
       {label}
     </button>
   );
 }
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  // Defined here to fix: ReferenceError: Section is not defined
+function Section({ title, children }) {
+  // Defined here to avoid ReferenceError
   return (
     <div className="rounded-2xl bg-white/70 p-4 shadow">
       <h3 className="mb-2 text-lg font-bold">{title}</h3>
@@ -328,7 +335,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
     </div>
   );
 }
-function Input({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder?: string }) {
+function Input({ value, onChange, placeholder }) {
   return (
     <input
       value={value}
@@ -338,30 +345,22 @@ function Input({ value, onChange, placeholder }: { value: string; onChange: (v: 
     />
   );
 }
-function Check({ ok }: { ok: boolean | null }) {
+function Check({ ok }) {
   if (ok === null) return null;
-  return <span className={`text-sm font-semibold ${ok ? "text-green-700" : "text-red-700"}`}>{ok ? "✓" : "✗"}</span>;
+  return <span className={\`text-sm font-semibold \${ok ? "text-green-700" : "text-red-700"}\`}>{ok ? "✓" : "✗"}</span>;
 }
 
-function useGradient(level: "mild" | "spicy") {
+function useGradient(level) {
   return level === "mild" ? "from-green-50 via-lime-100 to-white" : "from-orange-100 via-red-50 to-white";
 }
 
 // ---------- Morpheme Library ----------
-function MorphemeLibrary({
-  level,
-  onPick,
-  onClose,
-}: {
-  level: "mild" | "spicy";
-  onPick: (tab: Tab, index: number) => void;
-  onClose: () => void;
-}) {
+function MorphemeLibrary({ level, onPick, onClose }) {
   const ds = DATA[level];
-  const groups: { tab: Tab; items: RecordForTab[] }[] = [
-    { tab: "Prefix", items: ds.Prefix as RecordForTab[] },
-    { tab: "Suffix", items: ds.Suffix as RecordForTab[] },
-    { tab: "Base", items: ds.Base as RecordForTab[] },
+  const groups = [
+    { tab: "Prefix", items: ds.Prefix },
+    { tab: "Suffix", items: ds.Suffix },
+    { tab: "Base", items: ds.Base },
   ];
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
@@ -377,7 +376,7 @@ function MorphemeLibrary({
               <div className="flex flex-wrap gap-2">
                 {items.map((r, i) => (
                   <button
-                    key={`${tab}-${r.key}-${i}`}
+                    key={tab + "-" + r.key + "-" + i}
                     className="rounded-full border px-3 py-1 text-sm hover:bg-gray-50"
                     onClick={() => onPick(tab, i)}
                     title={r.gloss}
@@ -395,9 +394,9 @@ function MorphemeLibrary({
 }
 
 // ---------- App ----------
-export default function App() {
-  const [level, setLevel] = useState<null | "mild" | "spicy">(null);
-  const [tab, setTab] = useState<Tab>("Prefix");
+function App() {
+  const [level, setLevel] = useState(null);
+  const [tab, setTab] = useState("Prefix");
   const [activity, setActivity] = useState(0);
   const [index, setIndex] = useState(0);
   const [resetKey, setResetKey] = useState(0);
@@ -422,8 +421,8 @@ export default function App() {
   }
 
   const dataset = DATA[level];
-  const list = dataset[tab] as RecordForTab[];
-  const rec = list.length ? list[index % list.length] : (null as unknown as RecordForTab);
+  const list = dataset[tab];
+  const rec = list.length ? list[index % list.length] : null;
 
   const pastel = useGradient(level);
 
@@ -438,7 +437,7 @@ export default function App() {
   };
 
   return (
-    <div className={`min-h-screen bg-gradient-to-b ${pastel} p-6`}>
+    <div className={"min-h-screen bg-gradient-to-b " + pastel + " p-6"}>
       <div className="mx-auto max-w-5xl space-y-6">
         <header className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-2xl font-black tracking-tight">Morphology Lab ({level === "mild" ? "Mild" : "Spicy"})</h1>
@@ -505,7 +504,7 @@ export default function App() {
             setTab(t);
             setIndex(i);
             setShowLib(false);
-            hardReset();
+            hardReset(); // keeps current activity per your preference
           }}
         />
       )}
@@ -514,8 +513,8 @@ export default function App() {
 }
 
 // ---------- Activities ----------
-function Cloze({ rec }: { rec: RecordForTab }) {
-  const [attempts, setAttempts] = useState<string[]>(() => rec.cloze.answers.map(() => ""));
+function Cloze({ rec }) {
+  const [attempts, setAttempts] = useState(() => rec.cloze.answers.map(() => ""));
   const checks = attempts.map((a, i) => a.trim().toLowerCase() === rec.cloze.answers[i].toLowerCase());
   const allCorrect = checks.every(Boolean);
   return (
@@ -535,24 +534,24 @@ function Cloze({ rec }: { rec: RecordForTab }) {
     </div>
   );
 }
-function renderCloze(text: string) {
+function renderCloze(text) {
   const parts = text.split("__");
-  const out: React.ReactNode[] = [];
+  const out = [];
   parts.forEach((p, i) => {
-    out.push(<span key={`t${i}`}>{p}</span>);
+    out.push(<span key={"t" + i}>{p}</span>);
     if (i < parts.length - 1) {
-      out.push(<span key={`b${i}`} className="mx-1 inline-block min-w-16 border-b-2 border-dotted align-baseline">&nbsp;</span>);
+      out.push(<span key={"b" + i} className="mx-1 inline-block min-w-16 border-b-2 border-dotted align-baseline">&nbsp;</span>);
     }
   });
   return out;
 }
 
-function Matrix({ rec }: { rec: RecordForTab }) {
+function Matrix({ rec }) {
   const base = rec.matrix.base;
-  const [selP, setSelP] = useState<string>(rec.matrix.prefixes[0] || "");
-  const [selS, setSelS] = useState<string>(rec.matrix.suffixes[0] || "");
+  const [selP, setSelP] = useState(rec.matrix.prefixes[0] || "");
+  const [selS, setSelS] = useState(rec.matrix.suffixes[0] || "");
   const build = useMemo(
-    () => `${selP ? selP + (selP.endsWith("-") ? "" : "-") : ""}${base}${selS ? (selS.startsWith("-") ? "" : "-") + selS : ""}`.replaceAll("-", ""),
+    () => (\`\${selP ? selP + (selP.endsWith("-") ? "" : "-") : ""}\${base}\${selS ? (selS.startsWith("-") ? "" : "-") + selS : ""}\`).replaceAll("-", ""),
     [selP, selS, base]
   );
   return (
@@ -563,7 +562,7 @@ function Matrix({ rec }: { rec: RecordForTab }) {
           <h4 className="mb-2 font-semibold">Prefixes</h4>
           <div className="flex flex-wrap gap-2">
             {rec.matrix.prefixes.map((p) => (
-              <button key={p} className={`rounded-full px-3 py-1 text-sm ${selP === p ? "bg-black text-white" : "bg-gray-100"}`} onClick={() => setSelP((prev) => (prev === p ? "" : p))}>
+              <button key={p} className={\`rounded-full px-3 py-1 text-sm \${selP === p ? "bg-black text-white" : "bg-gray-100"}\`} onClick={() => setSelP((prev) => (prev === p ? "" : p))}>
                 {p}
               </button>
             ))}
@@ -577,7 +576,7 @@ function Matrix({ rec }: { rec: RecordForTab }) {
           <h4 className="mb-2 font-semibold">Suffixes</h4>
           <div className="flex flex-wrap gap-2">
             {rec.matrix.suffixes.map((s) => (
-              <button key={s} className={`rounded-full px-3 py-1 text-sm ${selS === s ? "bg-black text-white" : "bg-gray-100"}`} onClick={() => setSelS((prev) => (prev === s ? "" : s))}>
+              <button key={s} className={\`rounded-full px-3 py-1 text-sm \${selS === s ? "bg-black text-white" : "bg-gray-100"}\`} onClick={() => setSelS((prev) => (prev === s ? "" : s))}>
                 {s || <em>(none)</em>}
               </button>
             ))}
@@ -593,8 +592,8 @@ function Matrix({ rec }: { rec: RecordForTab }) {
   );
 }
 
-function Fill({ rec }: { rec: RecordForTab }) {
-  const [attempts, setAttempts] = useState<string[]>(() => rec.fillBlanks.sentences.map(() => ""));
+function Fill({ rec }) {
+  const [attempts, setAttempts] = useState(() => rec.fillBlanks.sentences.map(() => ""));
   const checks = attempts.map((a, i) => a.trim().toLowerCase() === rec.fillBlanks.sentences[i].answer.toLowerCase());
   const allCorrect = checks.every(Boolean);
   return (
@@ -616,8 +615,8 @@ function Fill({ rec }: { rec: RecordForTab }) {
   );
 }
 
-function Chain({ rec }: { rec: RecordForTab }) {
-  const [values, setValues] = useState<string[]>(() => rec.spellingChain.steps.map(() => ""));
+function Chain({ rec }) {
+  const [values, setValues] = useState(() => rec.spellingChain.steps.map(() => ""));
   const checks = values.map((v, i) => v.trim().toLowerCase() === rec.spellingChain.steps[i].answer.toLowerCase());
   const allCorrect = checks.every(Boolean);
   return (
@@ -643,8 +642,8 @@ function Chain({ rec }: { rec: RecordForTab }) {
   );
 }
 
-function Sums({ rec }: { rec: RecordForTab }) {
-  const [vals, setVals] = useState<string[]>(() => rec.wordSums.map(() => ""));
+function Sums({ rec }) {
+  const [vals, setVals] = useState(() => rec.wordSums.map(() => ""));
   const checks = vals.map((v, i) => v.trim().toLowerCase() === rec.wordSums[i].answer.toLowerCase());
   const allCorrect = checks.every(Boolean);
   return (
@@ -666,9 +665,9 @@ function Sums({ rec }: { rec: RecordForTab }) {
   );
 }
 
-function Hunt({ rec }: { rec: RecordForTab }) {
-  const [found, setFound] = useState<string[]>([]);
-  const toggle = (t: string) => setFound((arr) => (arr.includes(t) ? arr.filter((x) => x !== t) : [...arr, t]));
+function Hunt({ rec }) {
+  const [found, setFound] = useState([]);
+  const toggle = (t) => setFound((arr) => (arr.includes(t) ? arr.filter((x) => x !== t) : [...arr, t]));
   const allFound = rec.hunt.targets.every((t) => found.includes(t));
   return (
     <div className="space-y-4">
@@ -676,7 +675,7 @@ function Hunt({ rec }: { rec: RecordForTab }) {
       <p className="rounded-xl border bg-gray-50 p-3 text-gray-800">{rec.hunt.text}</p>
       <div className="flex flex-wrap gap-2">
         {rec.hunt.targets.map((t) => (
-          <button key={t} onClick={() => toggle(t)} className={`rounded-full border px-3 py-1 text-sm ${found.includes(t) ? "bg-black text-white" : "bg-white"}`}>
+          <button key={t} onClick={() => toggle(t)} className={\`rounded-full border px-3 py-1 text-sm \${found.includes(t) ? "bg-black text-white" : "bg-white"}\`}>
             {t}
           </button>
         ))}
@@ -686,8 +685,8 @@ function Hunt({ rec }: { rec: RecordForTab }) {
   );
 }
 
-function Choose({ rec }: { rec: RecordForTab }) {
-  const [choice, setChoice] = useState<number[]>(() => rec.chooseCorrect.map(() => -1));
+function Choose({ rec }) {
+  const [choice, setChoice] = useState(() => rec.chooseCorrect.map(() => -1));
   const checks = choice.map((c, i) => (c >= 0 ? rec.chooseCorrect[i].options[c] === rec.chooseCorrect[i].answer : null));
   const allCorrect = checks.every((v) => v === true);
   return (
@@ -699,11 +698,11 @@ function Choose({ rec }: { rec: RecordForTab }) {
             <div className="font-medium">{q.stem}</div>
             <div className="flex flex-wrap gap-2">
               {q.options.map((opt, j) => (
-                <button key={j} onClick={() => setChoice((arr) => arr.map((x, k) => (k === i ? j : x)))} className={`rounded-full px-3 py-1 text-sm ${choice[i] === j ? "bg-black text-white" : "bg-gray-100"}`}>
+                <button key={j} onClick={() => setChoice((arr) => arr.map((x, k) => (k === i ? j : x)))} className={\`rounded-full px-3 py-1 text-sm \${choice[i] === j ? "bg-black text-white" : "bg-gray-100"}\`}>
                   {opt}
                 </button>
               ))}
-              <Check ok={checks[i] as any} />
+              <Check ok={checks[i]} />
             </div>
           </div>
         ))}
@@ -713,7 +712,7 @@ function Choose({ rec }: { rec: RecordForTab }) {
   );
 }
 
-function RevealPanel({ answers, allCorrect }: { answers: string[]; allCorrect: boolean }) {
+function RevealPanel({ answers, allCorrect }) {
   const [show, setShow] = useState(false);
   return (
     <div className="flex items-center justify-between rounded-xl bg-gray-50 p-3">
@@ -733,24 +732,31 @@ function RevealPanel({ answers, allCorrect }: { answers: string[]; allCorrect: b
 // ---------- Sanity Tests ----------
 function runSanityTests() {
   try {
-    // Test 0: Section exists
     console.assert(typeof Section === 'function', "Section component must be defined");
-
-    // Test 1: Levels exist
     console.assert(DATA.mild && DATA.spicy, "Both levels must exist");
-
-    // Test 2: Each category present
-    (['mild','spicy'] as const).forEach((lvl) => {
-      const cat = (DATA as any)[lvl];
-      (['Prefix','Suffix','Base'] as const).forEach((t) => {
-        console.assert(Array.isArray(cat[t]) && cat[t].length > 0, `${lvl}.${t} should be non‑empty array`);
+    ["mild","spicy"].forEach((lvl) => {
+      const cat = DATA[lvl];
+      ["Prefix","Suffix","Base"].forEach((t) => {
+        console.assert(Array.isArray(cat[t]) && cat[t].length > 0, lvl + "." + t + " should be non‑empty array");
       });
     });
-
-    // Test 3: Record shape minimal fields
     const sample = DATA.mild.Prefix[0];
-    [
-      "key","gloss","examples","cloze","matrix","fillBlanks","spellingChain","wordSums","hunt","chooseCorrect"
-    ].forEach((k) => {
-      console.assert(Object.prototype.hasOwnProperty.call(sample, k), `Record missing field: ${k}`);
-   
+    ["key","gloss","examples","cloze","matrix","fillBlanks","spellingChain","wordSums","hunt","chooseCorrect"].forEach((k) => {
+      console.assert(Object.prototype.hasOwnProperty.call(sample, k), "Record missing field: " + k);
+    });
+    const labels = ["Cloze Reading","Word Matrix","Fill in The Blank Sentences","Spelling Chain","Word Sums","Morpheme Hunt","Choose The Correct"];
+    labels.forEach((lbl) => {
+      console.assert(ACTIVITIES.some((a) => a.label === lbl), "Activity '" + lbl + "' present");
+    });
+    console.log("Morphology Lab sanity tests: ✅ passed");
+  } catch (e) {
+    console.error("Morphology Lab sanity tests: ❌ failed", e);
+  }
+}
+
+// Mount app
+const root = ReactDOM.createRoot(document.getElementById("root"));
+root.render(<App />);
+  </script>
+</body>
+</html>
