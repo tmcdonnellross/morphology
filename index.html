@@ -1,175 +1,756 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Morphology Practice — Fixed</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    body { font-family: Arial, Helvetica, sans-serif; }
-    .card { transition: transform .2s, box-shadow .2s; }
-    .card:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgb(0 0 0 / .1), 0 4px 6px -4px rgb(0 0 0 / .1); }
-    .drop-zone { border: 2px dashed #cbd5e1; background:#f1f5f9; transition: background .2s; }
-    .drop-zone.drag-over { background:#e0e7ff; border-color:#818cf8; }
-    .draggable { cursor: grab; user-select:none; }
-    .draggable:active { cursor: grabbing; }
-    .hunt-word.selected { background-color:#c7d2fe; border-color:#818cf8; color:#4338ca; }
-    .bg-activity-sums        { background-color:#ecfdf5; }
-    .bg-activity-cloze       { background-color:#eff6ff; }
-    .bg-activity-matrix      { background-color:#f5f3ff; }
-    .bg-activity-hunt        { background-color:#fdf2f8; }
-    .bg-activity-chaining    { background-color:#fefce8; }
-    .bg-activity-default     { background-color:#f8fafc; }
-  </style>
-</head>
-<body class="bg-activity-default text-slate-800">
-<div class="min-h-screen p-4 sm:p-6 lg:p-8" id="app">
-  <main id="page-main-menu" class="max-w-4xl mx-auto">
-    <header class="text-center mb-10">
-      <h1 class="text-4xl sm:text-5xl font-bold text-slate-900">Morphology Practice</h1>
-      <p class="mt-2 text-lg text-slate-600">Select a category to start learning.</p>
-    </header>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <button data-cat="prefixes" class="card bg-white p-6 rounded-2xl shadow-md border flex flex-col items-center text-center">
-        <div class="bg-violet-100 text-violet-600 p-4 rounded-xl mb-4">
-          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.72"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.72-1.72"/></svg>
-        </div>
-        <h2 class="text-2xl font-semibold text-slate-900">Prefixes</h2>
-      </button>
-      <button data-cat="suffixes" class="card bg-white p-6 rounded-2xl shadow-md border flex flex-col items-center text-center">
-        <div class="bg-sky-100 text-sky-600 p-4 rounded-xl mb-4">
-          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 3 7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/><path d="m13 13 6 6"/></svg>
-        </div>
-        <h2 class="text-2xl font-semibold text-slate-900">Suffixes</h2>
-      </button>
-      <button data-cat="bases" class="card bg-white p-6 rounded-2xl shadow-md border flex flex-col items-center text-center">
-        <div class="bg-emerald-100 text-emerald-600 p-4 rounded-xl mb-4">
-          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-        </div>
-        <h2 class="text-2xl font-semibold text-slate-900">Base Words</h2>
-      </button>
+import React, { useMemo, useState, useEffect } from "react";
+
+// ==================================
+// Morphology Lab – React Single‑File App (Fixed)
+// • Start screen: choose 🥛 Mild or 🌶️ Spicy
+// • Tabs: Prefix / Suffix / Base
+// • 7 Activities (no numbers on buttons)
+// • Morpheme Library: pick any morpheme from a list
+// • Includes a defined <Section/> component (fixes ReferenceError)
+// • Sanity tests in console (added explicit tests)
+// • Behavior per user: picking from Library KEEPS current activity (option 1)
+// ==================================
+
+// ---------- DATA (Mild & Spicy separate wordbanks) ----------
+const DATA = {
+  mild: {
+    Prefix: [
+      {
+        key: "un-",
+        gloss: "not; opposite of",
+        notes: "Attaches to adjectives and some verbs.",
+        examples: ["unhappy", "unknown", "unlock", "unfair"],
+        cloze: {
+          passage:
+            "When a rule is __clear, students may feel __certain. A teacher can __do confusion by giving examples.",
+          answers: ["unclear", "uncertain", "undo"],
+        },
+        matrix: { base: "do", prefixes: ["re", "un", "mis"], suffixes: ["", "er", "ing", "able"] },
+        fillBlanks: {
+          sentences: [
+            { text: "It was __likely to rain, so we stayed inside.", answer: "unlikely" },
+            { text: "Please __pack your bag after school.", answer: "unpack" },
+          ],
+        },
+        spellingChain: {
+          start: "do",
+          steps: [
+            { clue: "Add prefix meaning 'not' to make opposite.", answer: "undo" },
+            { clue: "Change one letter to make a pet.", answer: "pup" },
+            { clue: "Add suffix -py to make a feeling.", answer: "happy" },
+            { clue: "Add prefix un- for opposite.", answer: "unhappy" },
+          ],
+        },
+        wordSums: [
+          { sum: "un + kind → __", answer: "unkind" },
+          { sum: "un + lock → __", answer: "unlock" },
+          { sum: "un + fair + ness → __", answer: "unfairness" },
+        ],
+        hunt: {
+          text:
+            "Most students felt unhappy about the unclear instructions, so the teacher chose to undo the task and start again.",
+          targets: ["unhappy", "unclear", "undo"],
+        },
+        chooseCorrect: [
+          { stem: "Prefix in 'unpack' means…", options: ["again", "not/opposite", "before"], answer: "not/opposite" },
+          { stem: "Best build for 'not able to be done'…", options: ["redoable", "undoable", "predo"], answer: "undoable" },
+        ],
+      },
+      {
+        key: "pre-",
+        gloss: "before; in advance",
+        notes: "Common with verbs/nouns (preheat, preview).",
+        examples: ["preview", "prepay", "preheat", "preteen"],
+        cloze: { passage: "The chef will __heat the oven. We can __view the trailer first.", answers: ["preheat", "preview"] },
+        matrix: { base: "view", prefixes: ["pre", "re"], suffixes: ["", "er", "ing", "ed"] },
+        fillBlanks: {
+          sentences: [
+            { text: "Parents must __pay for the trip by Friday.", answer: "prepay" },
+            { text: "At __school care opens early.", answer: "preschool" },
+          ],
+        },
+        spellingChain: {
+          start: "heat",
+          steps: [
+            { clue: "Add a prefix meaning 'before'.", answer: "preheat" },
+            { clue: "Change one letter to make where we sit.", answer: "seat" },
+            { clue: "Add prefix re- to do it again.", answer: "reseat" },
+          ],
+        },
+        wordSums: [
+          { sum: "pre + view → __", answer: "preview" },
+          { sum: "pre + pay → __", answer: "prepay" },
+        ],
+        hunt: {
+          text:
+            "Before camp, our class planned a preview night where families could prebook cabins and prepay for meals.",
+          targets: ["preview", "prebook", "prepay"],
+        },
+        chooseCorrect: [
+          { stem: "Which build means 'payment made before'?", options: ["repay", "prepay", "underpay"], answer: "prepay" },
+        ],
+      },
+    ],
+    Suffix: [
+      {
+        key: "-ful",
+        gloss: "full of; having",
+        notes: "Creates adjectives from nouns.",
+        examples: ["joyful", "helpful", "careful", "colorful"],
+        cloze: { passage: "A __care__ writer chooses words with care. A __thought__ answer shows depth.", answers: ["careful", "thoughtful"] },
+        matrix: { base: "care", prefixes: ["un", "re"], suffixes: ["ful", "less", "fully"] },
+        fillBlanks: {
+          sentences: [
+            { text: "Thank you for being so __ when I was stuck.", answer: "helpful" },
+            { text: "Be __ crossing the road.", answer: "careful" },
+          ],
+        },
+        spellingChain: {
+          start: "care",
+          steps: [
+            { clue: "Add a suffix to mean 'full of'.", answer: "careful" },
+            { clue: "Swap suffix to show the opposite.", answer: "careless" },
+            { clue: "Add un- for antonym base change.", answer: "uncaring" },
+          ],
+        },
+        wordSums: [
+          { sum: "care + ful → __", answer: "careful" },
+          { sum: "help + ful → __", answer: "helpful" },
+        ],
+        hunt: { text: "The helpful student gave a careful explanation that felt thoughtful and powerful.", targets: ["helpful", "careful", "thoughtful", "powerful"] },
+        chooseCorrect: [
+          { stem: "'-ful' usually attaches to…", options: ["verbs to make nouns", "nouns to make adjectives", "adjectives to make verbs"], answer: "nouns to make adjectives" },
+        ],
+      },
+      {
+        key: "-less",
+        gloss: "without; lacking",
+        notes: "Often contrasts with -ful (careful/careless).",
+        examples: ["fearless", "hopeless", "careless"],
+        cloze: { passage: "He gave a __point speech and a __care response.", answers: ["pointless", "careless"] },
+        matrix: { base: "hope", prefixes: ["re", "over"], suffixes: ["less", "ful", "ness"] },
+        fillBlanks: {
+          sentences: [
+            { text: "Losing again felt __, but we kept trying.", answer: "hopeless" },
+            { text: "A __ driver is dangerous.", answer: "careless" },
+          ],
+        },
+        spellingChain: { start: "fear", steps: [ { clue: "Add suffix to mean 'without'.", answer: "fearless" }, { clue: "Change base to 'care' and keep suffix.", answer: "careless" } ] },
+        wordSums: [ { sum: "care + less → __", answer: "careless" }, { sum: "fear + less → __", answer: "fearless" } ],
+        hunt: { text: "The fearless climber made a careless mistake near the summit.", targets: ["fearless", "careless"] },
+        chooseCorrect: [ { stem: "Which has the meaning 'without hope'?", options: ["hopeful", "hopeless", "hopefulness"], answer: "hopeless" } ],
+      },
+    ],
+    Base: [
+      {
+        key: "aqua",
+        gloss: "water",
+        notes: "Latin base seen in aquarium, aquifer.",
+        examples: ["aquarium", "aquatic", "aqueous", "aquifer"],
+        cloze: { passage: "An __arium is a tank for fish. Plants suited to water are called __tic plants.", answers: ["aquarium", "aquatic"] },
+        matrix: { base: "aqua", prefixes: ["sub", "re"], suffixes: ["rium", "tic", "fer"] },
+        fillBlanks: { sentences: [ { text: "The city draws water from an underground __fer.", answer: "aquifer" }, { text: "These plants live in __tic habitats.", answer: "aquatic" } ] },
+        spellingChain: { start: "aqua", steps: [ { clue: "Add -rium to make a place for water life.", answer: "aquarium" }, { clue: "Change ending to -tic for 'related to'.", answer: "aquatic" }, { clue: "Build a word for 'water + carry/bear'.", answer: "aquifer" } ] },
+        wordSums: [ { sum: "aqua + rium → __", answer: "aquarium" }, { sum: "aqua + tic → __", answer: "aquatic" }, { sum: "aqua + fer → __", answer: "aquifer" } ],
+        hunt: { text: "We tested soil near the river to map an aquifer and checked which aquatic insects lived there.", targets: ["aquifer", "aquatic"] },
+        chooseCorrect: [ { stem: "The base in 'aqueous' means…", options: ["air", "earth", "water"], answer: "water" } ],
+      },
+      {
+        key: "port",
+        gloss: "carry",
+        notes: "Seen in transport, portable, portfolio.",
+        examples: ["transport", "portable", "import", "export"],
+        cloze: { passage: "We __port fruit from overseas and __port goods to neighbours.", answers: ["import", "export"] },
+        matrix: { base: "port", prefixes: ["im", "ex", "trans"], suffixes: ["", "able", "er", "ation"] },
+        fillBlanks: { sentences: [ { text: "A laptop is __ because you can carry it easily.", answer: "portable" }, { text: "The bus will __port us across town.", answer: "transport" } ] },
+        spellingChain: { start: "port", steps: [ { clue: "Add im- for 'carry into'.", answer: "import" }, { clue: "Swap im- for ex-.", answer: "export" }, { clue: "Add -able to make an adjective.", answer: "portable" } ] },
+        wordSums: [ { sum: "im + port → __", answer: "import" }, { sum: "ex + port → __", answer: "export" }, { sum: "trans + port + ation → __", answer: "transportation" } ],
+        hunt: { text: "We used transportation to carry our portfolio to the expo and learned how goods are imported and exported.", targets: ["transportation", "imported", "exported", "portfolio"] },
+        chooseCorrect: [ { stem: "Which best matches 'carry across'?", options: ["report", "transport", "support"], answer: "transport" } ],
+      },
+    ],
+  },
+  spicy: {
+    Prefix: [
+      {
+        key: "inter-",
+        gloss: "between; among; reciprocal",
+        notes: "Forms complex networks of relations (international, interdependent).",
+        examples: ["interact", "intersect", "intermediate", "interdependence"],
+        cloze: { passage: "Two roads __sect near the museum, allowing towns to __connect.", answers: ["intersect", "interconnect"] },
+        matrix: { base: "act", prefixes: ["inter", "re", "counter"], suffixes: ["", "ion", "ive", "ed"] },
+        fillBlanks: { sentences: [ { text: "The team's __dependent roles meant success relied on everyone.", answer: "interdependent" }, { text: "We studied __national trade routes in Social Sciences.", answer: "international" } ] },
+        spellingChain: { start: "act", steps: [ { clue: "Add prefix for 'between/among'.", answer: "interact" }, { clue: "Swap base to 'sect' (cut) to make a road crossing.", answer: "intersect" }, { clue: "Add -ion to form the noun.", answer: "intersection" } ] },
+        wordSums: [ { sum: "inter + act → __", answer: "interact" }, { sum: "inter + sect + ion → __", answer: "intersection" }, { sum: "inter + connect + ed → __", answer: "interconnected" } ],
+        hunt: { text: "Our interconnected systems course explored international finance and interdependent ecosystems.", targets: ["interconnected", "international", "interdependent"] },
+        chooseCorrect: [ { stem: "'Inter-' contributes which meaning in 'interdisciplinary'?", options: ["within", "between", "against"], answer: "between" } ],
+      },
+      {
+        key: "trans-",
+        gloss: "across; through; change",
+        notes: "Signals movement/change (transport, transform).",
+        examples: ["transport", "transmit", "transcontinental", "transform"],
+        cloze: { passage: "Heat can __fer through solids, and data can __mit across networks.", answers: ["transfer", "transmit"] },
+        matrix: { base: "form", prefixes: ["trans", "re"], suffixes: ["", "ation", "ative", "ed"] },
+        fillBlanks: { sentences: [ { text: "Ice can __form into water when heated.", answer: "transform" }, { text: "A __continental flight crosses an ocean or vast landmass.", answer: "transcontinental" } ] },
+        spellingChain: { start: "port", steps: [ { clue: "Add prefix meaning 'across'.", answer: "transport" }, { clue: "Swap base to 'form' and keep prefix to mean 'change'.", answer: "transform" }, { clue: "Add -ation to make the noun.", answer: "transformation" } ] },
+        wordSums: [ { sum: "trans + mit → __", answer: "transmit" }, { sum: "trans + form + ation → __", answer: "transformation" } ],
+        hunt: { text: "We observed rapid transformation in a transcontinental species that could transmit signals via bioluminescence.", targets: ["transformation", "transcontinental", "transmit"] },
+        chooseCorrect: [ { stem: "Which best fits 'across/through'?", options: ["mis-", "anti-", "trans-"], answer: "trans-" } ],
+      },
+      {
+        key: "sub-",
+        gloss: "under; below; secondary",
+        notes: "Common with marine/structural terms (submarine, subsoil).",
+        examples: ["submarine", "subzero", "subdivide", "substandard"],
+        cloze: { passage: "We measured __zero temperatures and explored __terranean caves.", answers: ["subzero", "subterranean"] },
+        matrix: { base: "divide", prefixes: ["sub", "re"], suffixes: ["", "ed", "ion"] },
+        fillBlanks: { sentences: [ { text: "Engineers __divide land into sections for housing.", answer: "subdivide" }, { text: "A __marine cable lies on the ocean floor.", answer: "submarine" } ] },
+        spellingChain: { start: "soil", steps: [ { clue: "Add Latin base 'terra' (earth) with sub- to make underground (two-word answer).", answer: "subterranean" }, { clue: "Switch to 'zero' with sub- for below freezing.", answer: "subzero" } ] },
+        wordSums: [ { sum: "sub + divide + ed → __", answer: "subdivided" }, { sum: "sub + marine → __", answer: "submarine" } ],
+        hunt: { text: "Subterranean tunnels connected the submarine base to subzero storage rooms.", targets: ["subterranean", "submarine", "subzero"] },
+        chooseCorrect: [ { stem: "'Sub-' in 'substandard' signals…", options: ["above", "below/less than", "against"], answer: "below/less than" } ],
+      },
+    ],
+    Suffix: [
+      {
+        key: "-tion",
+        gloss: "act; process; result (noun)",
+        notes: "Attaches to many Latinate verbs (create→creation).",
+        examples: ["creation", "migration", "intersection", "transformation"],
+        cloze: { passage: "The migra__ of birds and the forma__ of clouds were topics today.", answers: ["migration", "formation"] },
+        matrix: { base: "migrate", prefixes: ["im", "trans"], suffixes: ["ion", "ory", "ive"] },
+        fillBlanks: { sentences: [ { text: "River __ shapes valleys over time.", answer: "erosion" }, { text: "We studied the __ of new stars.", answer: "formation" } ] },
+        spellingChain: { start: "create", steps: [ { clue: "Add -ion to make the noun.", answer: "creation" }, { clue: "Change base to 'migrate' and keep noun suffix.", answer: "migration" } ] },
+        wordSums: [ { sum: "inter + sect + ion → __", answer: "intersection" }, { sum: "trans + form + ation → __", answer: "transformation" } ],
+        hunt: { text: "Erosion and deposition influence the formation of deltas after repeated migration of sediments.", targets: ["erosion", "formation", "migration", "deposition"] },
+        chooseCorrect: [ { stem: "'-tion' usually forms…", options: ["verbs", "adjectives", "nouns"], answer: "nouns" } ],
+      },
+      {
+        key: "-able",
+        gloss: "capable of; able to be",
+        notes: "Forms adjectives from verbs (measure→measurable).",
+        examples: ["portable", "measurable", "predictable", "sustainable"],
+        cloze: { passage: "Targets must be measur__ and goals should be achiev__.", answers: ["measurable", "achievable"] },
+        matrix: { base: "predict", prefixes: ["pre", "un"], suffixes: ["able", "ability"] },
+        fillBlanks: { sentences: [ { text: "A sturdy tent is __ in high winds.", answer: "durable" }, { text: "Solar is a __ energy source.", answer: "sustainable" } ] },
+        spellingChain: { start: "port", steps: [ { clue: "Add -able to form 'easy to carry'.", answer: "portable" }, { clue: "Change base to 'predict'.", answer: "predictable" } ] },
+        wordSums: [ { sum: "read + able → __", answer: "readable" }, { sum: "sustain + able → __", answer: "sustainable" } ],
+        hunt: { text: "Measurable steps and achievable milestones make a sustainable plan more durable.", targets: ["measurable", "achievable", "sustainable", "durable"] },
+        chooseCorrect: [ { stem: "'-able' usually means…", options: ["without", "capable of", "full of"], answer: "capable of" } ],
+      },
+    ],
+    Base: [
+      {
+        key: "scrib/script",
+        gloss: "write",
+        notes: "Seen in describe, transcript, inscription.",
+        examples: ["describe", "inscription", "manuscript", "transcript"],
+        cloze: { passage: "Archaeologists found an in__tion on the tablet and a hand‑written manu__pt.", answers: ["inscription", "manuscript"] },
+        matrix: { base: "scrib/script", prefixes: ["de", "in", "trans"], suffixes: ["e", "tion", "t"] },
+        fillBlanks: { sentences: [ { text: "Please __scribe the scene in detail.", answer: "describe" }, { text: "The reporter typed the court __script.", answer: "transcript" } ] },
+        spellingChain: { start: "scribe", steps: [ { clue: "Add 'in-' and swap base to 'script' for a carving.", answer: "inscription" }, { clue: "Add 'manu-' (hand) + script for a handwritten book.", answer: "manuscript" } ] },
+        wordSums: [ { sum: "de + scribe → __", answer: "describe" }, { sum: "in + script + ion → __", answer: "inscription" } ],
+        hunt: { text: "We compared a manuscript to a transcript and highlighted each inscription we could find.", targets: ["manuscript", "transcript", "inscription"] },
+        chooseCorrect: [ { stem: "The base in 'subscription' contributes…", options: ["write", "carry", "time"], answer: "write" } ],
+      },
+      {
+        key: "chron",
+        gloss: "time",
+        notes: "Appears in chronology, synchronize, anachronism.",
+        examples: ["chronological", "synchronize", "anachronism", "chronicle"],
+        cloze: { passage: "We put events in __logical order and __chronized the clocks.", answers: ["chronological", "synchronized"] },
+        matrix: { base: "chron", prefixes: ["syn", "an", "dia"], suffixes: ["ic", "ical", "ism", "icle"] },
+        fillBlanks: { sentences: [ { text: "A museum guide will __nicle the city's history.", answer: "chronicle" }, { text: "A movie set in the wrong era is an __chronism.", answer: "anachronism" } ] },
+        spellingChain: { start: "chrono", steps: [ { clue: "Add -logical to form an adjective for ordered by time.", answer: "chronological" }, { clue: "Add syn- and -ize to make 'set to the same time'.", answer: "synchronize" } ] },
+        wordSums: [ { sum: "syn + chron + ize → __", answer: "synchronize" }, { sum: "a(n) + chron + ism → __", answer: "anachronism" } ],
+        hunt: { text: "The chronological chart helped us synchronize watches and spot an anachronism in the film.", targets: ["chronological", "synchronize", "anachronism"] },
+        chooseCorrect: [ { stem: "Which word means 'record of events over time'?", options: ["chronic", "chronicle", "chrome"], answer: "chronicle" } ],
+      },
+      {
+        key: "struct",
+        gloss: "build; arrange",
+        notes: "Structure, construct, instruct, infrastructure.",
+        examples: ["construct", "instruction", "infrastructure", "destruction"],
+        cloze: { passage: "Workers con__ a bridge while planners design infra__ure.", answers: ["construct", "infrastructure"] },
+        matrix: { base: "struct", prefixes: ["con", "in", "de"], suffixes: ["", "ure", "ion", "ive"] },
+        fillBlanks: { sentences: [ { text: "Clear __structions help learners succeed.", answer: "instructions" }, { text: "Earthquakes may damage critical __structure.", answer: "infrastructure" } ] },
+        spellingChain: { start: "struct", steps: [ { clue: "Add con- and -ion for the act of building.", answer: "construction" }, { clue: "Swap con- to de- to mean 'tearing down'.", answer: "destruction" } ] },
+        wordSums: [ { sum: "in + struct + ion → __", answer: "instruction" }, { sum: "infra + struct + ure → __", answer: "infrastructure" } ],
+        hunt: { text: "Construction continued as crews repaired infrastructure and followed each instruction carefully.", targets: ["construction", "infrastructure", "instruction"] },
+        chooseCorrect: [ { stem: "'De-' + struct + ion gives…", options: ["instruction", "construction", "destruction"], answer: "destruction" } ],
+      },
+    ],
+  },
+};
+
+const TABS = ["Prefix", "Suffix", "Base"] as const;
+const ACTIVITIES = [
+  { key: "cloze", label: "Cloze Reading" },
+  { key: "matrix", label: "Word Matrix" },
+  { key: "fill", label: "Fill in The Blank Sentences" },
+  { key: "chain", label: "Spelling Chain" },
+  { key: "sums", label: "Word Sums" },
+  { key: "hunt", label: "Morpheme Hunt" },
+  { key: "choose", label: "Choose The Correct" },
+] as const;
+
+type Tab = typeof TABS[number];
+
+type RecordForTab = (typeof DATA)["mild"][keyof (typeof DATA)["mild"]][number];
+
+// ---------- Small UI primitives ----------
+function Badge({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium">
+      {children}
+    </span>
+  );
+}
+function Pill({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`rounded-2xl px-4 py-2 text-sm font-semibold shadow-sm transition ${
+        active ? "bg-black text-white" : "bg-white text-gray-800 hover:bg-gray-100 border"
+      }`}
+    >
+      {label}
+    </button>
+  );
+}
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  // Defined here to fix: ReferenceError: Section is not defined
+  return (
+    <div className="rounded-2xl bg-white/70 p-4 shadow">
+      <h3 className="mb-2 text-lg font-bold">{title}</h3>
+      <div className="space-y-2 text-sm">{children}</div>
     </div>
-  </main>
+  );
+}
+function Input({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder?: string }) {
+  return (
+    <input
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      className="w-full rounded-xl border px-3 py-2 outline-none focus:ring"
+    />
+  );
+}
+function Check({ ok }: { ok: boolean | null }) {
+  if (ok === null) return null;
+  return <span className={`text-sm font-semibold ${ok ? "text-green-700" : "text-red-700"}`}>{ok ? "✓" : "✗"}</span>;
+}
 
-  <div id="page-morpheme-list" class="hidden max-w-5xl mx-auto">
-    <header class="mb-8">
-      <button id="btn-back-main" class="flex items-center text-slate-600 hover:text-slate-900 font-medium">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 mr-2"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>Back to categories
-      </button>
-      <h1 id="morpheme-list-title" class="text-3xl font-bold text-slate-900 mt-2"></h1>
-    </header>
-    <div id="morpheme-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
-  </div>
+function useGradient(level: "mild" | "spicy") {
+  return level === "mild" ? "from-green-50 via-lime-100 to-white" : "from-orange-100 via-red-50 to-white";
+}
 
-  <div id="page-activity-menu" class="hidden max-w-4xl mx-auto">
-    <header class="mb-10">
-      <button id="back-to-morpheme-list" class="flex items-center text-slate-600 hover:text-slate-900 font-medium">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 mr-2"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>Back to list
-      </button>
-      <div class="text-center">
-        <h1 class="text-4xl font-bold text-slate-900">Activities for <span id="selected-morpheme-title" class="text-violet-600"></span></h1>
-        <p class="mt-2 text-lg text-slate-600">Choose an activity to practice this morpheme.</p>
-      </div>
-    </header>
-    <div id="activity-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <div data-activity="page-word-sums" class="card cursor-pointer bg-white p-6 rounded-2xl shadow-md border">
-        <h2 class="text-xl font-semibold text-slate-900 mb-1">Word Sums</h2>
-        <p class="text-slate-500 text-sm">Combine morphemes to build words.</p>
-      </div>
-      <div data-activity="page-fill-in-blanks" class="card cursor-pointer bg-white p-6 rounded-2xl shadow-md border">
-        <h2 class="text-xl font-semibold text-slate-900 mb-1">Fill-in-the-Blanks</h2>
-        <p class="text-slate-500 text-sm">Drag words into the correct sentences.</p>
-      </div>
-      <div data-activity="page-word-matrix" class="card cursor-pointer bg-white p-6 rounded-2xl shadow-md border">
-        <h2 class="text-xl font-semibold text-slate-900 mb-1">Word Matrix</h2>
-        <p class="text-slate-500 text-sm">Combine morphemes from the grid.</p>
-      </div>
-      <div data-activity="page-morpheme-hunt" class="card cursor-pointer bg-white p-6 rounded-2xl shadow-md border">
-        <h2 class="text-xl font-semibold text-slate-900 mb-1">Morpheme Hunt</h2>
-        <p class="text-slate-500 text-sm">Find words with the target morpheme.</p>
-      </div>
-      <div data-activity="page-spelling-chaining" class="card cursor-pointer bg-white p-6 rounded-2xl shadow-md border">
-        <h2 class="text-xl font-semibold text-slate-900 mb-1">Spelling Chaining</h2>
-        <p class="text-slate-500 text-sm">Build a chain of words step-by-step.</p>
+// ---------- Morpheme Library ----------
+function MorphemeLibrary({
+  level,
+  onPick,
+  onClose,
+}: {
+  level: "mild" | "spicy";
+  onPick: (tab: Tab, index: number) => void;
+  onClose: () => void;
+}) {
+  const ds = DATA[level];
+  const groups: { tab: Tab; items: RecordForTab[] }[] = [
+    { tab: "Prefix", items: ds.Prefix as RecordForTab[] },
+    { tab: "Suffix", items: ds.Suffix as RecordForTab[] },
+    { tab: "Base", items: ds.Base as RecordForTab[] },
+  ];
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="max-h-[85vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-white p-4 shadow-xl">
+        <div className="mb-2 flex items-center justify-between">
+          <h2 className="text-xl font-bold">Morpheme Library — {level === "mild" ? "Mild" : "Spicy"}</h2>
+          <button className="rounded-xl border px-3 py-1.5" onClick={onClose}>Close</button>
+        </div>
+        <div className="space-y-4">
+          {groups.map(({ tab, items }) => (
+            <div key={tab}>
+              <div className="mb-1 text-sm font-semibold text-gray-600">{tab}</div>
+              <div className="flex flex-wrap gap-2">
+                {items.map((r, i) => (
+                  <button
+                    key={`${tab}-${r.key}-${i}`}
+                    className="rounded-full border px-3 py-1 text-sm hover:bg-gray-50"
+                    onClick={() => onPick(tab, i)}
+                    title={r.gloss}
+                  >
+                    {r.key}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
-  </div>
+  );
+}
 
-  <div id="page-word-sums" class="hidden max-w-3xl mx-auto"></div>
-  <div id="page-fill-in-blanks" class="hidden max-w-4xl mx-auto"></div>
-  <div id="page-word-matrix" class="hidden max-w-5xl mx-auto"></div>
-  <div id="page-morpheme-hunt" class="hidden max-w-4xl mx-auto"></div>
-  <div id="page-spelling-chaining" class="hidden max-w-3xl mx-auto"></div>
-</div>
+// ---------- App ----------
+export default function App() {
+  const [level, setLevel] = useState<null | "mild" | "spicy">(null);
+  const [tab, setTab] = useState<Tab>("Prefix");
+  const [activity, setActivity] = useState(0);
+  const [index, setIndex] = useState(0);
+  const [resetKey, setResetKey] = useState(0);
+  const [showLib, setShowLib] = useState(false);
 
-<!-- Minimal templates to validate navigation (activities load later via JS) -->
-<template id="word-sums-template"><div class="p-4">Sums</div></template>
-<template id="fill-in-blanks-template"><div class="p-4">Cloze</div></template>
-<template id="word-matrix-template"><div class="p-4">Matrix</div></template>
-<template id="morpheme-hunt-template"><div class="p-4">Hunt</div></template>
-<template id="spelling-chaining-template"><div class="p-4">Chain</div></template>
+  // Sanity tests
+  useEffect(() => {
+    runSanityTests();
+  }, []);
 
-<script>
-(function(){
-  const pages = ['page-main-menu','page-morpheme-list','page-activity-menu','page-word-sums','page-fill-in-blanks','page-word-matrix','page-morpheme-hunt','page-spelling-chaining'];
-  const pageBgMap = {
-    'page-main-menu':'bg-activity-default','page-morpheme-list':'bg-activity-default','page-activity-menu':'bg-activity-default',
-    'page-word-sums':'bg-activity-sums','page-fill-in-blanks':'bg-activity-cloze','page-word-matrix':'bg-activity-matrix',
-    'page-morpheme-hunt':'bg-activity-hunt','page-spelling-chaining':'bg-activity-chaining'
+  if (!level) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-orange-50 to-yellow-100 text-center">
+        <h1 className="mb-3 text-4xl font-black">Morphology Lab</h1>
+        <p className="mb-6 text-gray-700">Choose your flavour of challenge:</p>
+        <div className="flex gap-6">
+          <button className="rounded-2xl bg-green-500 px-6 py-3 text-lg font-semibold text-white shadow hover:bg-green-600" onClick={() => setLevel("mild")}>🥛 Mild</button>
+          <button className="rounded-2xl bg-red-500 px-6 py-3 text-lg font-semibold text-white shadow hover:bg-red-600" onClick={() => setLevel("spicy")}>🌶️ Spicy</button>
+        </div>
+      </div>
+    );
+  }
+
+  const dataset = DATA[level];
+  const list = dataset[tab] as RecordForTab[];
+  const rec = list.length ? list[index % list.length] : (null as unknown as RecordForTab);
+
+  const pastel = useGradient(level);
+
+  const hardReset = () => setResetKey((k) => k + 1);
+  const next = () => {
+    setIndex((i) => (i + 1) % list.length);
+    hardReset();
   };
-  let currentCategory='', currentMorpheme='';
+  const random = () => {
+    setIndex(Math.floor(Math.random() * list.length));
+    hardReset();
+  };
 
-  function applyActivityBackground(pageId){
-    document.body.className = document.body.className.replace(/\\bbg-activity-\\w+\\b/g,'').trim();
-    document.body.classList.add(pageBgMap[pageId]||'bg-activity-default');
-  }
-  function showPage(id){
-    pages.forEach(pid=>{ const el=document.getElementById(pid); if(el) el.classList.toggle('hidden', pid!==id); });
-    applyActivityBackground(id);
-  }
-  function showMorphemeList(category){
-    currentCategory = category;
-    const grid = document.getElementById('morpheme-grid');
-    document.getElementById('morpheme-list-title').textContent = category[0].toUpperCase()+category.slice(1);
-    grid.innerHTML = '';
-    const morphemes = {
-      prefixes: ["un-","re-","dis-","semi-","sub-","mis-","multi-","pre-","trans-","non-","fore-","inter-","over-","uni-","bi-","tri-"],
-      suffixes: ["-s","-ing","-ed","-ly","-er","-est","-ful","-less","-tion","-able","-ible","-ure"],
-      bases: ["aqua","aud","bio","port","rupt","scrib","spect","struct","tract","vid","ject","bene","dict","phon","photo"]
-    };
-    morphemes[category].forEach(morpheme=>{
-      const btn=document.createElement('button');
-      btn.className='card bg-white p-4 rounded-lg shadow-sm border text-center font-semibold text-slate-800 hover:border-violet-400 hover:text-violet-600';
-      btn.textContent=morpheme;
-      btn.addEventListener('click', ()=>showActivityMenu(morpheme));
-      grid.appendChild(btn);
+  return (
+    <div className={`min-h-screen bg-gradient-to-b ${pastel} p-6`}>
+      <div className="mx-auto max-w-5xl space-y-6">
+        <header className="flex flex-wrap items-center justify-between gap-3">
+          <h1 className="text-2xl font-black tracking-tight">Morphology Lab ({level === "mild" ? "Mild" : "Spicy"})</h1>
+          <div className="flex items-center gap-2">
+            <button className="rounded-xl border px-3 py-1.5" onClick={() => setShowLib(true)}>Morpheme Library</button>
+            {TABS.map((t) => (
+              <Pill key={t} label={t} active={t === tab} onClick={() => { setTab(t); hardReset(); }} />
+            ))}
+            <button className="rounded-xl border px-3 py-1.5 text-sm text-gray-600" onClick={() => setLevel(null)}>Back</button>
+          </div>
+        </header>
+
+        <div className="grid gap-4 md:grid-cols-3">
+          <Section title="Morpheme">
+            <div className="flex items-center gap-2 text-lg font-semibold">
+              <span>{rec.key}</span>
+              <Badge>{tab}</Badge>
+            </div>
+            <p className="text-gray-700"><span className="font-semibold">Meaning: </span>{rec.gloss}</p>
+            <p className="text-gray-700"><span className="font-semibold">Notes: </span>{rec.notes}</p>
+            <p className="text-gray-700"><span className="font-semibold">Examples: </span>{rec.examples.join(", ")}</p>
+            <div className="flex gap-2 pt-2">
+              <button className="rounded-xl bg-black px-3 py-1.5 text-white" onClick={next}>Next</button>
+              <button className="rounded-xl border px-3 py-1.5" onClick={random}>New Set</button>
+            </div>
+          </Section>
+
+          <Section title="Activities">
+            <div className="flex flex-wrap gap-2">
+              {ACTIVITIES.map((a, i) => (
+                <Pill key={a.key} label={a.label} active={i === activity} onClick={() => setActivity(i)} />
+              ))}
+            </div>
+            <p className="text-xs text-gray-600">Select an activity. Use <em>Next</em> or <em>New Set</em> to rotate morphemes.</p>
+          </Section>
+
+          <Section title="Teacher Tips">
+            <ul className="list-disc pl-5 text-gray-700">
+              <li>Insist on precise <strong>word sums</strong> before spelling.</li>
+              <li>Ask: “What does each morpheme contribute to meaning?”</li>
+              <li>Discuss whether builds are attested words.</li>
+            </ul>
+          </Section>
+        </div>
+
+        <main key={resetKey} className="rounded-2xl bg-white p-4 shadow-lg">
+          {activity === 0 && <Cloze rec={rec} />}
+          {activity === 1 && <Matrix rec={rec} />}
+          {activity === 2 && <Fill rec={rec} />}
+          {activity === 3 && <Chain rec={rec} />}
+          {activity === 4 && <Sums rec={rec} />}
+          {activity === 5 && <Hunt rec={rec} />}
+          {activity === 6 && <Choose rec={rec} />}
+        </main>
+
+        <footer className="pt-2 text-center text-xs text-gray-600">© {new Date().getFullYear()} Morphology Lab · Extend DATA above to add content</footer>
+      </div>
+
+      {showLib && (
+        <MorphemeLibrary
+          level={level}
+          onClose={() => setShowLib(false)}
+          onPick={(t, i) => {
+            setTab(t);
+            setIndex(i);
+            setShowLib(false);
+            hardReset();
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+// ---------- Activities ----------
+function Cloze({ rec }: { rec: RecordForTab }) {
+  const [attempts, setAttempts] = useState<string[]>(() => rec.cloze.answers.map(() => ""));
+  const checks = attempts.map((a, i) => a.trim().toLowerCase() === rec.cloze.answers[i].toLowerCase());
+  const allCorrect = checks.every(Boolean);
+  return (
+    <div className="space-y-4">
+      <h2 className="text-xl font-bold">Cloze Reading</h2>
+      <p className="text-gray-800">{renderCloze(rec.cloze.passage)}</p>
+      <div className="grid gap-2 md:grid-cols-2">
+        {rec.cloze.answers.map((_, i) => (
+          <div key={i} className="flex items-center gap-2">
+            <span className="text-sm text-gray-500">Blank {i + 1}:</span>
+            <Input value={attempts[i]} onChange={(v) => setAttempts((arr) => arr.map((x, j) => (j === i ? v : x)))} placeholder="type answer" />
+            <Check ok={attempts[i] ? checks[i] : null} />
+          </div>
+        ))}
+      </div>
+      <RevealPanel answers={rec.cloze.answers} allCorrect={allCorrect} />
+    </div>
+  );
+}
+function renderCloze(text: string) {
+  const parts = text.split("__");
+  const out: React.ReactNode[] = [];
+  parts.forEach((p, i) => {
+    out.push(<span key={`t${i}`}>{p}</span>);
+    if (i < parts.length - 1) {
+      out.push(<span key={`b${i}`} className="mx-1 inline-block min-w-16 border-b-2 border-dotted align-baseline">&nbsp;</span>);
+    }
+  });
+  return out;
+}
+
+function Matrix({ rec }: { rec: RecordForTab }) {
+  const base = rec.matrix.base;
+  const [selP, setSelP] = useState<string>(rec.matrix.prefixes[0] || "");
+  const [selS, setSelS] = useState<string>(rec.matrix.suffixes[0] || "");
+  const build = useMemo(
+    () => `${selP ? selP + (selP.endsWith("-") ? "" : "-") : ""}${base}${selS ? (selS.startsWith("-") ? "" : "-") + selS : ""}`.replaceAll("-", ""),
+    [selP, selS, base]
+  );
+  return (
+    <div className="space-y-4">
+      <h2 className="text-xl font-bold">Word Matrix</h2>
+      <div className="grid gap-4 md:grid-cols-3">
+        <div className="rounded-xl border p-3">
+          <h4 className="mb-2 font-semibold">Prefixes</h4>
+          <div className="flex flex-wrap gap-2">
+            {rec.matrix.prefixes.map((p) => (
+              <button key={p} className={`rounded-full px-3 py-1 text-sm ${selP === p ? "bg-black text-white" : "bg-gray-100"}`} onClick={() => setSelP((prev) => (prev === p ? "" : p))}>
+                {p}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="rounded-xl border p-3">
+          <h4 className="mb-2 font-semibold">Base</h4>
+          <div className="rounded-lg bg-gray-50 p-3 text-center font-bold uppercase tracking-wide">{base}</div>
+        </div>
+        <div className="rounded-xl border p-3">
+          <h4 className="mb-2 font-semibold">Suffixes</h4>
+          <div className="flex flex-wrap gap-2">
+            {rec.matrix.suffixes.map((s) => (
+              <button key={s} className={`rounded-full px-3 py-1 text-sm ${selS === s ? "bg-black text-white" : "bg-gray-100"}`} onClick={() => setSelS((prev) => (prev === s ? "" : s))}>
+                {s || <em>(none)</em>}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+      <div className="rounded-xl bg-gray-50 p-3">
+        <div className="text-sm text-gray-600">Build</div>
+        <div className="text-2xl font-black">{build}</div>
+      </div>
+      <p className="text-sm text-gray-600">Tip: Discuss whether the build is a real word in use.</p>
+    </div>
+  );
+}
+
+function Fill({ rec }: { rec: RecordForTab }) {
+  const [attempts, setAttempts] = useState<string[]>(() => rec.fillBlanks.sentences.map(() => ""));
+  const checks = attempts.map((a, i) => a.trim().toLowerCase() === rec.fillBlanks.sentences[i].answer.toLowerCase());
+  const allCorrect = checks.every(Boolean);
+  return (
+    <div className="space-y-4">
+      <h2 className="text-xl font-bold">Fill in The Blank Sentences</h2>
+      <div className="space-y-3">
+        {rec.fillBlanks.sentences.map((s, i) => (
+          <div key={i} className="grid items-center gap-2 md:grid-cols-6">
+            <div className="md:col-span-4 text-gray-800">{s.text}</div>
+            <div className="md:col-span-2 flex items-center gap-2">
+              <Input value={attempts[i]} onChange={(v) => setAttempts((arr) => arr.map((x, j) => (j === i ? v : x)))} placeholder="answer" />
+              <Check ok={attempts[i] ? checks[i] : null} />
+            </div>
+          </div>
+        ))}
+      </div>
+      <RevealPanel answers={rec.fillBlanks.sentences.map((s) => s.answer)} allCorrect={allCorrect} />
+    </div>
+  );
+}
+
+function Chain({ rec }: { rec: RecordForTab }) {
+  const [values, setValues] = useState<string[]>(() => rec.spellingChain.steps.map(() => ""));
+  const checks = values.map((v, i) => v.trim().toLowerCase() === rec.spellingChain.steps[i].answer.toLowerCase());
+  const allCorrect = checks.every(Boolean);
+  return (
+    <div className="space-y-4">
+      <h2 className="text-xl font-bold">Spelling Chain</h2>
+      <p className="text-gray-700">Start: <strong>{rec.spellingChain.start}</strong>. Change/add/remove one part each step.</p>
+      <div className="space-y-2">
+        {rec.spellingChain.steps.map((st, i) => (
+          <div key={i} className="grid items-center gap-2 md:grid-cols-6">
+            <div className="md:col-span-4">
+              <div className="text-sm text-gray-600">Step {i + 1}</div>
+              <div className="font-medium">{st.clue}</div>
+            </div>
+            <div className="md:col-span-2 flex items-center gap-2">
+              <Input value={values[i]} onChange={(v) => setValues((arr) => arr.map((x, j) => (j === i ? v : x)))} placeholder="result" />
+              <Check ok={values[i] ? checks[i] : null} />
+            </div>
+          </div>
+        ))}
+      </div>
+      <RevealPanel answers={rec.spellingChain.steps.map((s) => s.answer)} allCorrect={allCorrect} />
+    </div>
+  );
+}
+
+function Sums({ rec }: { rec: RecordForTab }) {
+  const [vals, setVals] = useState<string[]>(() => rec.wordSums.map(() => ""));
+  const checks = vals.map((v, i) => v.trim().toLowerCase() === rec.wordSums[i].answer.toLowerCase());
+  const allCorrect = checks.every(Boolean);
+  return (
+    <div className="space-y-4">
+      <h2 className="text-xl font-bold">Word Sums</h2>
+      <div className="space-y-2">
+        {rec.wordSums.map((w, i) => (
+          <div key={i} className="grid items-center gap-2 md:grid-cols-6">
+            <div className="md:col-span-4 font-medium">{w.sum}</div>
+            <div className="md:col-span-2 flex items-center gap-2">
+              <Input value={vals[i]} onChange={(v) => setVals((arr) => arr.map((x, j) => (j === i ? v : x)))} placeholder="build" />
+              <Check ok={vals[i] ? checks[i] : null} />
+            </div>
+          </div>
+        ))}
+      </div>
+      <RevealPanel answers={rec.wordSums.map((w) => w.answer)} allCorrect={allCorrect} />
+    </div>
+  );
+}
+
+function Hunt({ rec }: { rec: RecordForTab }) {
+  const [found, setFound] = useState<string[]>([]);
+  const toggle = (t: string) => setFound((arr) => (arr.includes(t) ? arr.filter((x) => x !== t) : [...arr, t]));
+  const allFound = rec.hunt.targets.every((t) => found.includes(t));
+  return (
+    <div className="space-y-4">
+      <h2 className="text-xl font-bold">Morpheme Hunt</h2>
+      <p className="rounded-xl border bg-gray-50 p-3 text-gray-800">{rec.hunt.text}</p>
+      <div className="flex flex-wrap gap-2">
+        {rec.hunt.targets.map((t) => (
+          <button key={t} onClick={() => toggle(t)} className={`rounded-full border px-3 py-1 text-sm ${found.includes(t) ? "bg-black text-white" : "bg-white"}`}>
+            {t}
+          </button>
+        ))}
+      </div>
+      <RevealPanel answers={rec.hunt.targets} allCorrect={allFound} />
+    </div>
+  );
+}
+
+function Choose({ rec }: { rec: RecordForTab }) {
+  const [choice, setChoice] = useState<number[]>(() => rec.chooseCorrect.map(() => -1));
+  const checks = choice.map((c, i) => (c >= 0 ? rec.chooseCorrect[i].options[c] === rec.chooseCorrect[i].answer : null));
+  const allCorrect = checks.every((v) => v === true);
+  return (
+    <div className="space-y-4">
+      <h2 className="text-xl font-bold">Choose The Correct</h2>
+      <div className="space-y-3">
+        {rec.chooseCorrect.map((q, i) => (
+          <div key={i} className="space-y-2 rounded-xl border p-3">
+            <div className="font-medium">{q.stem}</div>
+            <div className="flex flex-wrap gap-2">
+              {q.options.map((opt, j) => (
+                <button key={j} onClick={() => setChoice((arr) => arr.map((x, k) => (k === i ? j : x)))} className={`rounded-full px-3 py-1 text-sm ${choice[i] === j ? "bg-black text-white" : "bg-gray-100"}`}>
+                  {opt}
+                </button>
+              ))}
+              <Check ok={checks[i] as any} />
+            </div>
+          </div>
+        ))}
+      </div>
+      <RevealPanel answers={rec.chooseCorrect.map((q) => q.answer)} allCorrect={allCorrect} />
+    </div>
+  );
+}
+
+function RevealPanel({ answers, allCorrect }: { answers: string[]; allCorrect: boolean }) {
+  const [show, setShow] = useState(false);
+  return (
+    <div className="flex items-center justify-between rounded-xl bg-gray-50 p-3">
+      <div className="text-sm text-gray-700">{allCorrect ? "Great work — everything correct!" : "Need a hint or to check?"}</div>
+      <button onClick={() => setShow((s) => !s)} className="rounded-xl border px-3 py-1.5 text-sm">
+        {show ? "Hide answers" : "Show answers"}
+      </button>
+      {show && (
+        <div className="basis-full pt-2 text-sm text-gray-800">
+          <span className="font-semibold">Answers:</span> {answers.join(", ")}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------- Sanity Tests ----------
+function runSanityTests() {
+  try {
+    // Test 0: Section exists
+    console.assert(typeof Section === 'function', "Section component must be defined");
+
+    // Test 1: Levels exist
+    console.assert(DATA.mild && DATA.spicy, "Both levels must exist");
+
+    // Test 2: Each category present
+    (['mild','spicy'] as const).forEach((lvl) => {
+      const cat = (DATA as any)[lvl];
+      (['Prefix','Suffix','Base'] as const).forEach((t) => {
+        console.assert(Array.isArray(cat[t]) && cat[t].length > 0, `${lvl}.${t} should be non‑empty array`);
+      });
     });
-    showPage('page-morpheme-list');
-  }
-  function showActivityMenu(morpheme){
-    currentMorpheme=morpheme;
-    document.getElementById('selected-morpheme-title').textContent=`'${morpheme}'`;
-    document.getElementById('back-to-morpheme-list').onclick=()=>showMorphemeList(currentCategory);
-    showPage('page-activity-menu');
-  }
 
-  // expose to window so inline-less buttons can call
-  window._nav = { showMorphemeList, showActivityMenu, showPage };
-
-  // wire category buttons
-  document.querySelectorAll('[data-cat]').forEach(btn=>{
-    btn.addEventListener('click', ()=>window._nav.showMorphemeList(btn.getAttribute('data-cat')));
-  });
-  document.getElementById('btn-back-main').addEventListener('click', ()=>window._nav.showPage('page-main-menu'));
-
-  // wire activity cards
-  document.querySelectorAll('#activity-grid [data-activity]').forEach(card=>{
-    card.addEventListener('click', ()=>window._nav.showPage(card.getAttribute('data-activity')));
-  });
-
-  // initial
-  showPage('page-main-menu');
-})();
-</script>
-</body>
-</html>
+    // Test 3: Record shape minimal fields
+    const sample = DATA.mild.Prefix[0];
+    [
+      "key","gloss","examples","cloze","matrix","fillBlanks","spellingChain","wordSums","hunt","chooseCorrect"
+    ].forEach((k) => {
+      console.assert(Object.prototype.hasOwnProperty.call(sample, k), `Record missing field: ${k}`);
+   
